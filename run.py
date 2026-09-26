@@ -71,7 +71,13 @@ def main():
     )
     classes = args.classes.split(",") if args.classes else get_classes(args.dataset)
 
-    print(f"[ad3d] dataset={cfg.dataset}  device={cfg.device}  classes={len(classes)}")
+    # resolve 'auto' now so the log shows the real device being used
+    import torch
+    dev = ("cuda" if torch.cuda.is_available() else "cpu") if args.device == "auto" \
+        else args.device
+    print(f"[ad3d] dataset={cfg.dataset}  device={dev}"
+          f"{'' if dev != 'cuda' else ' (' + torch.cuda.get_device_name(0) + ')'}"
+          f"  classes={len(classes)}")
     print(f"[ad3d] config: {cfg}")
 
     rows = run_benchmark(cfg, classes=classes)
