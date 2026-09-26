@@ -1,0 +1,50 @@
+{
+  "config": {
+    "data_root": "/kaggle/input/datasets/smnihalahmed/anomaly-shapenet-v2/Anomaly-ShapeNet-v2/dataset/pcd",
+    "dataset": "shapenet",
+    "max_nn": 60,
+    "n_scales": 2,
+    "num_group": 512,
+    "group_size": 64,
+    "smooth_k": 12,
+    "coreset_ratio": 0.1,
+    "voxel": 0.01,
+    "points_budget": 30000,
+    "topk": 1,
+    "device": "auto",
+    "seed": 0,
+    "extra": {}
+  },
+  "results": {
+    "ashtray0": {
+      "o_auroc": 1.0,
+      "o_aupr": 0.9999999999999998,
+      "p_auroc": 0.96590336770901,
+      "p_aupr": 0.7619991010460518,
+      "p_auroc_pooled": 0.975119993211708,
+      "p_aupr_pooled": 0.6225973309006985,
+      "n_test": 29,
+      "n_anom": 14
+    },
+    "bowl0": {
+      "o_auroc": 1.0,
+      "o_aupr": 1.0,
+      "p_auroc": 0.9923968882736093,
+      "p_aupr": 0.8264904667202272,
+      "p_auroc_pooled": 0.9947743369972096,
+      "p_aupr_pooled": 0.8897309724020093,
+      "n_test": 33,
+      "n_anom": 18
+    },
+    "__mean__": {
+      "o_auroc": 1.0,
+      "o_aupr": 0.9999999999999999,
+      "p_auroc": 0.9791501279913096,
+      "p_aupr": 0.7942447838831395,
+      "p_auroc_pooled": 0.9849471651044588,
+      "p_aupr_pooled": 0.7561641516513539,
+      "n_test": 31.0,
+      "n_anom": 16.0
+    }
+  }
+}
