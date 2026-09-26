@@ -107,13 +107,18 @@ def main():
     print("[1/4] preprocessing alignment + determinism")
     check_alignment(model)
 
-    print("[2/4] Anomaly-ShapeNet layout (comma GT, 'positive' normals)")
+    print("[2/4] Anomaly-ShapeNet layout (comma GT, GT-stem matching, twins)")
     rows = run_benchmark(cfg, classes=["ashtray0", "bowl0"], verbose=False)
     m = rows["__mean__"]
     print(f"  O-AUROC {m['o_auroc']:.3f} | P-AUROC {m['p_auroc']:.3f} | "
           f"P-AUPR {m['p_aupr']:.3f} | pooled P-AUROC {m['p_auroc_pooled']:.3f}")
     assert m["o_auroc"] > 0.9, "object detection failed on obvious synthetic anomalies"
     assert m["p_auroc"] > 0.7, "localization failed on obvious synthetic anomalies"
+    # loader must load 5 normal + 5 anomalous (10 test pcds incl. twins)
+    from ad3d.datasets import load_test
+    te = load_test(shapenet_root, "shapenet", "ashtray0")
+    n_norm = sum(1 for s in te if s.label == 0)
+    assert (n_norm, len(te) - n_norm) == (5, 5), (n_norm, len(te))
 
     print("[3/4] Real3D-AD layout (space GT, 'good' normals)")
     cfg_r = Config(dataset="real3d", data_root=real3d_root,

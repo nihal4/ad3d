@@ -4,10 +4,12 @@ Expected on-disk layouts (after extraction):
 
 Anomaly-ShapeNet  (root = the `pcd` directory):
     <root>/<category>/train/*.pcd              4 normal prototypes
-    <root>/<category>/test/*positive*.pcd      normal test samples (label 0)
-    <root>/<category>/GT/*.txt                 anomalous samples: "x y z flag"
+    <root>/<category>/test/*.pcd               normal + anomalous (see below)
+    <root>/<category>/GT/*.txt                 anomalous samples: "x,y,z,flag"
                                                (the txt itself is the input cloud,
                                                 mirroring the official benchmark code)
+    A test .pcd is anomalous iff GT/<stem>.txt exists (its twin in test/ is
+    ignored); every other test .pcd is a normal sample.
 
 Real3D-AD  (root = the directory containing the 12 category folders):
     <root>/<category>/train/*.pcd              4 normal prototypes
@@ -22,6 +24,7 @@ from dataclasses import dataclass
 
 import numpy as np
 import open3d as o3d
+import pandas as pd
 
 
 # --------------------------------------------------------------------------- #
