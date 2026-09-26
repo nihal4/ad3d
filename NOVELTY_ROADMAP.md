@@ -1,0 +1,84 @@
+# Novelty Roadmap — where the headroom is, and which code to touch
+
+Last benchmark sweep: Sept 2026. Targets to beat (standard 4-sample protocol,
+O-AUROC / P-AUROC):
+
+| Method | Real3D-AD | Anomaly-ShapeNet |
+|---|---|---|
+| Reg3D-AD (NeurIPS'23) | 70.4 / 70.5 | 57.2 / – |
+| PointCore (ECCV'24) | 82.9 / 73.1 | – |
+| ISMP (AAAI'25) | 76.7 / 83.6 | 75.7 / 69.1 |
+| MC3D-AD (IJCAI'25) | 78.2 / 76.8 | 84.2 / 74.8 |
+| Simple3D (2025) | 80.4 / 92.3 | 86.0 / 92.9 |
+| Reg2Inv (NeurIPS'25) | ~83.9 / ~92.0 | ~86.1 / 88.2 |
+| Template3D-AD (IJCAI'25) | **84.4** / – | 86.5 / – |
+| PASDF (2025) | 80.2 / 74.5 | **90.0** / – |
+
+**The two headline gaps in the field:**
+1. Point-level **AUPR** on Real3D-AD is ~0.19–0.25 at best (vs AUROC ~0.92) —
+   precise localization is essentially unsolved.
+2. A handful of Real3D-AD categories fail for everyone: **gemstone, starfish,
+   duck, toffees** (amorphous / high intra-class variation objects).
+
+---
+
+## Direction A — Better features (`src/ad3d/features.py`)
+
+- `compute_fpfh_ms()` is the descriptor. Swap/extend with: surface curvature
+  features, normal-angle histograms, learned descriptors (PointMAE features
+  can be added and concatenated — the official Real3D-AD repo has ready
+  PointMAE/Point-BERT extractors to borrow).
+- Simple3D's repo also contains unused SHOT / Spin / CVFH / shape-context
+  extractors — a descriptor-combination study is cheap and publishable.
+- **Rotation invariance** is a known weakness of FPFH pipelines (Reg2Inv's
+  whole pitch). Rotation-invariant descriptors would help Anomaly-ShapeNet.
+
+## Direction B — Smarter aggregation (`lfsa()` in features.py)
+
+- LFSA is a plain mean over `group_size` neighbors. Try attention-weighted
+  aggregation, or multi-resolution grouping (concat fine + coarse group stats:
+  mean, std, max).
+- `num_group`/`group_size` trade-off is essentially unexplored in the papers.
+
+## Direction C — Memory & distance (`src/ad3d/memory.py`)
+
+- Currently: one bank per category, greedy k-center coreset, Euclidean NN.
+  Try: per-prototype banks with min-over-banks scoring (a cheap proxy for
+  registration), Mahalanobis / local-density-normalized distances,
+  PatchCore-style reweighting of the memory.
+- **Unified multi-class model**: one shared bank for all 40 categories +
+  category-agnostic scoring. Almost nobody reports this; big novelty
+  surface + practical value.
+
+## Direction D — Scoring rules (`src/ad3d/scoring.py`)
+
+- Object score is currently `max`. Test top-k mean, percentile stats,
+  per-sample z-normalization of the score map (helps when train/test scan
+  density differs — exactly the Real3D-AD 360°-vs-single-view gap).
+- Score-map smoothing (`smooth_k`) interacts strongly with P-AUPR.
+
+## Direction E — Alignment for Real3D-AD (the biggest single lever)
+
+Train clouds are full 360° scans; test clouds are single-view. Registration-
+based methods (Reg3D-AD → ISMP → Reg2Inv → Template3D-AD) own the top of the
+O-AUROC table because of this. A cheap experiment: add an ICP pre-alignment
+of each test cloud to its nearest training prototype **before** feature
+matching (`o3d.pipelines.registration.registration_icp` — no new deps).
+Beat Reg2Inv's alignment and you are at SOTA O-AUROC.
+
+## Direction F — Evaluation hygiene (do this regardless)
+
+- Run ≥3 seeds (`--seed`), report mean ± std. Real3D-AD has only ~100 test
+  samples/category — margins <1.5% are usually noise.
+- Report both point-level conventions (the repo already does).
+- Keep a fixed results ledger: `results/*.json` already stores the full config
+  with each run — never overwrite, always compare tagged runs.
+
+---
+
+## Suggested first experiment (1 Kaggle session)
+
+1. Run the full baseline on both datasets (`--tag base`).
+2. Add ICP pre-alignment (Direction E) behind a config flag → `--tag icp`.
+3. Compare per-category CSVs; if gemstone/starfish/duck/toffees improve,
+   you have a paper seedling. If not, Direction C per-prototype banks next.
