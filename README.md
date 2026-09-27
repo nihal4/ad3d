@@ -54,6 +54,12 @@ python run.py --dataset shapenet --data-root <path-to-pcd-dir> \
 # full benchmarks (Simple3D-like settings)
 python run.py --dataset shapenet --data-root <path-to-pcd-dir> --tag baseline
 python run.py --dataset real3d  --data-root <path-with-12-category-dirs> --tag baseline
+
+# Real3D-AD ablations for the 360°-train vs single-view-test gap:
+#   --align icp   RANSAC(FPFH)+ICP-register every test cloud to the prototypes
+#   --cuts N      augment the memory with N simulated single-view cuts/prototype
+#   --topk K      object score = mean of top-K point scores (vs max at K=1)
+python run.py --dataset real3d --data-root <path> --align icp --cuts 4 --topk 32 --tag aligned
 ```
 
 Results are written to `results/<tag>_<dataset>_<timestamp>.csv|.json`

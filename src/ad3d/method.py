@@ -2,6 +2,16 @@
 
 This ties the modules together and is the class you subclass / modify when
 prototyping a novel method.
+
+Two optional helpers target the Real3D-AD 360°-train vs single-view-test gap
+(Direction E of NOVELTY_ROADMAP.md):
+
+  * ``align='icp'`` : RANSAC(FPFH)+ICP-register every test cloud to the merged
+    training prototypes before feature matching, all in one shared reference
+    frame (prototypes are mutually aligned at fit time).
+  * ``cuts=N``      : augment the memory bank with N simulated single-view
+    cuts of each prototype, so scan-boundary artifacts become "known normal"
+    (mimics the train_cut trick used by the Simple3D paper).
 """
 from __future__ import annotations
 
@@ -12,7 +22,7 @@ import numpy as np
 import open3d as o3d
 
 from . import datasets as D
-from .features import compute_fpfh_ms, lfsa
+from .features import RegistrationTarget, compute_fpfh_ms, lfsa
 from .memory import MemoryBank
 from .metrics import compute_metrics
 from .scoring import object_score, point_scores
@@ -31,6 +41,10 @@ class Config:
     smooth_k: int = 12                 # centers averaged per point when scoring
     # memory
     coreset_ratio: float = 0.1
+    cuts: int = 0                      # simulated single-view cuts per prototype
+    # alignment
+    align: str = "none"                # 'none' | 'icp'
+    align_voxel: float = 0.05          # RANSAC/ICP voxel (unit-scale frame)
     # preprocessing
     voxel: float = 0.01                # relative voxel size (cloud unit-normalized)
     points_budget: int = 100_000       # hard cap on points after voxel down
@@ -42,6 +56,11 @@ class Config:
     extra: dict = field(default_factory=dict)
 
 
+def _transform(pts: np.ndarray, T: np.ndarray) -> np.ndarray:
+    T = np.asarray(T)
+    return pts @ T[:3, :3].T + T[:3, 3]
+
+
 class Simple3DLite:
     """Clean reimplementation of the Simple3D-style prototype pipeline."""
 
@@ -50,24 +69,31 @@ class Simple3DLite:
     def __init__(self, cfg: Config):
         self.cfg = cfg
         self.memory = MemoryBank(device=cfg.device)
+        self._ref_center: np.ndarray | None = None
+        self._ref_scale: float | None = None
+        self._reg_target: RegistrationTarget | None = None
 
     # ------------------------------------------------------------------ #
     # Preprocessing (kept identical for train and test!)
     # ------------------------------------------------------------------ #
-    def preprocess(self, points: np.ndarray, gt: np.ndarray | None = None,
-                   path_hash: int = 0):
-        """Center + unit-scale, deterministic voxel downsample, budget cap.
+    def _normalize(self, points: np.ndarray) -> np.ndarray:
+        """Center + unit-scale.
 
-        Returns (points, gt) with rows kept aligned. `path_hash` makes the
-        random budget-cap reproducible per sample.
+        With ``align='icp'`` everything lives in the prototype reference frame
+        (fixed center/scale from prototype 0) instead of per-cloud stats - a
+        prerequisite for meaningful registration.
         """
-        pts = points.astype(np.float32)
+        pts = np.asarray(points, dtype=np.float64)
+        if self.cfg.align == "icp" and self._ref_center is not None:
+            return (pts - self._ref_center) / self._ref_scale
         pts = pts - pts.mean(axis=0, keepdims=True)
-        scale = float(np.linalg.norm(pts, axis=1).max())
-        if scale > 0:
-            pts = pts / scale
+        s = float(np.linalg.norm(pts, axis=1).max())
+        return pts / s if s > 0 else pts
 
-        # deterministic voxel subsample (keeps point <-> gt alignment)
+    def _finalize(self, pts: np.ndarray, gt: np.ndarray | None = None,
+                  path_hash: int = 0):
+        """Deterministic voxel downsample + budget cap, keeping rows aligned."""
+        pts = pts.astype(np.float32)
         if self.cfg.voxel and self.cfg.voxel > 0:
             grid = np.floor(pts / self.cfg.voxel).astype(np.int64)
             _, idx = np.unique(grid, axis=0, return_index=True)
@@ -75,8 +101,6 @@ class Simple3DLite:
             pts = pts[idx]
             if gt is not None:
                 gt = gt[idx]
-
-        # random budget cap (seeded by path so re-runs are identical)
         if pts.shape[0] > self.cfg.points_budget:
             rng = np.random.default_rng(self.cfg.seed + path_hash)
             keep = rng.choice(pts.shape[0], self.cfg.points_budget, replace=False)
@@ -84,10 +108,14 @@ class Simple3DLite:
             pts = pts[keep]
             if gt is not None:
                 gt = gt[keep]
-
         if gt is None:
             gt = np.zeros(pts.shape[0], dtype=np.float32)
         return pts.astype(np.float32), gt.astype(np.float32)
+
+    def preprocess(self, points: np.ndarray, gt: np.ndarray | None = None,
+                   path_hash: int = 0):
+        """Center + unit-scale, voxel downsample, budget cap (rows aligned)."""
+        return self._finalize(self._normalize(points), gt, path_hash)
 
     # ------------------------------------------------------------------ #
     # Per-sample feature extraction (override this for new methods)
@@ -101,23 +129,86 @@ class Simple3DLite:
                                      device=self.cfg.device)
         return centers, center_feats
 
+    def _add_to_memory(self, pts: np.ndarray) -> None:
+        _, center_feats = self.sample_features(pts)
+        self.memory.add(center_feats)
+
+    def _simulated_cuts(self, pts: np.ndarray, n_cuts: int) -> int:
+        """Augment the memory with simulated single-view scans of a prototype.
+
+        Each cut keeps the directional cap visible from a random viewpoint
+        (star-shape approximation) - the resulting scan-boundary artifacts
+        match those of real single-view test clouds.
+        """
+        rng = np.random.default_rng(self.cfg.seed + 1234)
+        dirs = pts / np.maximum(np.linalg.norm(pts, axis=1, keepdims=True), 1e-9)
+        added = 0
+        for _ in range(n_cuts):
+            u = rng.normal(size=3)
+            u /= np.linalg.norm(u)
+            cut = pts[dirs @ u > 0.15]
+            if cut.shape[0] < 200:
+                continue
+            cut_f, _ = self._finalize(cut)
+            self._add_to_memory(cut_f)
+            added += 1
+        return added
+
     # ------------------------------------------------------------------ #
     # Fit / evaluate
     # ------------------------------------------------------------------ #
     def fit(self, cls: str):
         self.memory = MemoryBank(device=self.cfg.device)
-        for pts in D.load_train(self.cfg.data_root, self.cfg.dataset, cls):
-            pts, _ = self.preprocess(pts)
-            _, center_feats = self.sample_features(pts)
-            self.memory.add(center_feats)
+        trains = D.load_train(self.cfg.data_root, self.cfg.dataset, cls)
+
+        if self.cfg.align == "icp":
+            o3d.utility.random.seed(self.cfg.seed)
+            raws = [np.asarray(t, dtype=np.float64) for t in trains]
+            base = raws[0]
+            self._ref_center = base.mean(axis=0)
+            self._ref_scale = float(np.linalg.norm(
+                base - self._ref_center, axis=1).max()) or 1.0
+            base_n = (base - self._ref_center) / self._ref_scale
+            self._reg_target = RegistrationTarget(base_n, voxel=self.cfg.align_voxel)
+
+            proto_frames = [base_n]
+            for r in raws[1:]:                       # mutually align prototypes
+                r_n = (r - self._ref_center) / self._ref_scale
+                T, _ = self._reg_target.align(r_n)
+                proto_frames.append(_transform(r_n, T))
+            # denser registration target: the merged aligned prototypes
+            self._reg_target = RegistrationTarget(
+                np.concatenate(proto_frames), voxel=self.cfg.align_voxel)
+        else:
+            self._ref_center, self._reg_target = None, None
+            proto_frames = [self._normalize(t) for t in trains]
+
+        for pf in proto_frames:
+            pts, _ = self._finalize(pf)
+            self._add_to_memory(pts)
+            if self.cfg.cuts > 0:
+                self._simulated_cuts(pts, self.cfg.cuts)
+
         self.memory.build(coreset_ratio=self.cfg.coreset_ratio, seed=self.cfg.seed)
 
     def evaluate(self, cls: str) -> dict:
         test = D.load_test(self.cfg.data_root, self.cfg.dataset, cls)
+        if self.cfg.align == "icp":
+            o3d.utility.random.seed(self.cfg.seed + 7)
+
         obj_labels, obj_scores, point_gts, point_scores_all = [], [], [], []
+        fitnesses: list[float] = []
         for s in test:
             h = int(hashlib.md5(s.path.encode()).hexdigest()[:8], 16)
-            pts, gt = self.preprocess(s.points, s.gt, path_hash=h)
+            if self.cfg.align == "icp" and self._reg_target is not None:
+                p_n = (np.asarray(s.points, dtype=np.float64)
+                       - self._ref_center) / self._ref_scale
+                T, fitness = self._reg_target.align(p_n)
+                fitnesses.append(fitness)
+                pts, gt = self._finalize(_transform(p_n, T), s.gt, path_hash=h)
+            else:
+                pts, gt = self.preprocess(s.points, s.gt, path_hash=h)
+
             centers, center_feats = self.sample_features(pts)
             center_dists = self.memory.min_dists(center_feats)
             p_scores = point_scores(pts, centers, center_dists,
@@ -127,7 +218,11 @@ class Simple3DLite:
             obj_scores.append(object_score(p_scores, topk=self.cfg.topk))
             point_gts.append(gt)
             point_scores_all.append(p_scores)
-        return compute_metrics(obj_labels, obj_scores, point_gts, point_scores_all)
+
+        m = compute_metrics(obj_labels, obj_scores, point_gts, point_scores_all)
+        if fitnesses:
+            m["align_fitness_mean"] = float(np.mean(fitnesses))
+        return m
 
 
 def run_benchmark(cfg: Config, classes: list[str] | None = None,
@@ -143,11 +238,13 @@ def run_benchmark(cfg: Config, classes: list[str] | None = None,
         m = model.evaluate(cls)
         rows[cls] = m
         if verbose:
+            extra = (f"  align_fitness {m['align_fitness_mean']:.2f}"
+                     if "align_fitness_mean" in m else "")
             print(f"[{cfg.dataset}] {cls:>14s}  "
                   f"O-AUROC {m['o_auroc']:.3f}  "
                   f"P-AUROC {m['p_auroc']:.3f}  "
                   f"P-AUPR {m['p_aupr']:.3f}  "
-                  f"({m['n_anom']}/{m['n_test']} anomalous)", flush=True)
+                  f"({m['n_anom']}/{m['n_test']} anomalous){extra}", flush=True)
 
     df = pd.DataFrame(rows).T
     mean_row = df.mean(numeric_only=True)

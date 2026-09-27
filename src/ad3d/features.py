@@ -116,3 +116,55 @@ def lfsa(
     idx = knn_indices(centers, coords, group_size, device=device)
     center_feats = feats[idx].mean(axis=1).astype(np.float32)
     return centers.astype(np.float32), center_feats
+
+
+# --------------------------------------------------------------------------- #
+# Test-time registration (Direction E of NOVELTY_ROADMAP.md)
+# --------------------------------------------------------------------------- #
+class RegistrationTarget:
+    """Precomputed reference for RANSAC(FPFH)+ICP alignment of incoming clouds.
+
+    Built once per category from the (merged, mutually aligned) training
+    prototypes. ``align()`` returns the 4x4 transform that puts a source
+    cloud into the prototype reference frame, plus the ICP fitness.
+    """
+
+    def __init__(self, target_pts: np.ndarray, voxel: float = 0.05):
+        self.voxel = float(voxel)
+        reg = o3d.pipelines.registration
+
+        self.pcd = to_o3d(target_pts).voxel_down_sample(self.voxel)
+        self.pcd.estimate_normals(
+            o3d.geometry.KDTreeSearchParamHybrid(radius=self.voxel * 2, max_nn=30))
+        self.fpfh = reg.compute_fpfh_feature(
+            self.pcd,
+            o3d.geometry.KDTreeSearchParamHybrid(radius=self.voxel * 5, max_nn=100))
+
+        self.pcd_fine = to_o3d(target_pts).voxel_down_sample(self.voxel * 0.5)
+        self.pcd_fine.estimate_normals(
+            o3d.geometry.KDTreeSearchParamHybrid(radius=self.voxel, max_nn=30))
+
+    def align(self, source_pts: np.ndarray) -> tuple[np.ndarray, float]:
+        """Coarse global registration (FPFH + RANSAC) + point-to-plane ICP refine."""
+        reg = o3d.pipelines.registration
+        v = self.voxel
+
+        src = to_o3d(source_pts).voxel_down_sample(v)
+        src.estimate_normals(
+            o3d.geometry.KDTreeSearchParamHybrid(radius=v * 2, max_nn=30))
+        f_src = reg.compute_fpfh_feature(
+            src, o3d.geometry.KDTreeSearchParamHybrid(radius=v * 5, max_nn=100))
+
+        ransac = reg.registration_ransac_based_on_feature_matching(
+            src, self.pcd, f_src, self.fpfh,
+            mutual_filter=False,
+            max_correspondence_distance=v * 1.5,
+            estimation_method=reg.TransformationEstimationPointToPoint(False),
+            ransac_n=3,
+            criteria=reg.RANSACConvergenceCriteria(50000, 0.999))
+
+        icp = reg.registration_icp(
+            to_o3d(source_pts), self.pcd_fine, v * 0.6, ransac.transformation,
+            reg.TransformationEstimationPointToPlane())
+
+        return np.asarray(icp.transformation), float(icp.fitness)

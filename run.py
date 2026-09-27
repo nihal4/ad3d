@@ -44,6 +44,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--group-size", type=int, default=128)
     p.add_argument("--smooth-k", type=int, default=12)
     p.add_argument("--coreset", type=float, default=0.1)
+    p.add_argument("--cuts", type=int, default=0,
+                   help="augment memory with N simulated single-view cuts per prototype")
+    p.add_argument("--align", default="none", choices=["none", "icp"],
+                   help="RANSAC+ICP registration of test clouds to the prototypes")
+    p.add_argument("--align-voxel", type=float, default=0.05,
+                   help="voxel size for RANSAC/ICP registration (unit-scale frame)")
     p.add_argument("--voxel", type=float, default=0.01)
     p.add_argument("--points-budget", type=int, default=100_000)
     p.add_argument("--topk", type=int, default=1)
@@ -63,6 +69,9 @@ def main():
         group_size=args.group_size,
         smooth_k=args.smooth_k,
         coreset_ratio=args.coreset,
+        cuts=args.cuts,
+        align=args.align,
+        align_voxel=args.align_voxel,
         voxel=args.voxel,
         points_budget=args.points_budget,
         topk=args.topk,

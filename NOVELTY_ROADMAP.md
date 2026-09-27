@@ -66,6 +66,12 @@ of each test cloud to its nearest training prototype **before** feature
 matching (`o3d.pipelines.registration.registration_icp` — no new deps).
 Beat Reg2Inv's alignment and you are at SOTA O-AUROC.
 
+**Status: implemented** — `--align icp` (RANSAC+ICP to the mutually aligned
+prototypes) and `--cuts N` (single-view memory augmentation, the train_cut
+trick). Also try `--topk 32`: with max-pooling the object score is picked
+from the tail of the FPFH matching noise, and top-k pooling exploits that
+anomalies are *regions*, not points. Run the ablation grid in the notebook.
+
 ## Direction F — Evaluation hygiene (do this regardless)
 
 - Run ≥3 seeds (`--seed`), report mean ± std. Real3D-AD has only ~100 test
