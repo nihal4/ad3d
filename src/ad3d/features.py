@@ -127,44 +127,68 @@ class RegistrationTarget:
     Built once per category from the (merged, mutually aligned) training
     prototypes. ``align()`` returns the 4x4 transform that puts a source
     cloud into the prototype reference frame, plus the ICP fitness.
+
+    Coarse-to-fine pipeline (fast): RANSAC at a coarse voxel with mutual
+    filtering, then two point-to-plane ICP passes at increasingly fine
+    resolution - never on the full-resolution cloud.
     """
 
     def __init__(self, target_pts: np.ndarray, voxel: float = 0.05):
         self.voxel = float(voxel)
+        v = self.voxel
         reg = o3d.pipelines.registration
 
-        self.pcd = to_o3d(target_pts).voxel_down_sample(self.voxel)
+        # coarse level (global registration)
+        self.pcd = to_o3d(target_pts).voxel_down_sample(v * 2)
         self.pcd.estimate_normals(
-            o3d.geometry.KDTreeSearchParamHybrid(radius=self.voxel * 2, max_nn=30))
+            o3d.geometry.KDTreeSearchParamHybrid(radius=v * 4, max_nn=30))
         self.fpfh = reg.compute_fpfh_feature(
-            self.pcd,
-            o3d.geometry.KDTreeSearchParamHybrid(radius=self.voxel * 5, max_nn=100))
+            self.pcd, o3d.geometry.KDTreeSearchParamHybrid(radius=v * 10, max_nn=100))
 
-        self.pcd_fine = to_o3d(target_pts).voxel_down_sample(self.voxel * 0.5)
+        # mid level (ICP pass 1)
+        self.pcd_mid = to_o3d(target_pts).voxel_down_sample(v)
+        self.pcd_mid.estimate_normals(
+            o3d.geometry.KDTreeSearchParamHybrid(radius=v * 2, max_nn=30))
+
+        # fine level (ICP pass 2)
+        self.pcd_fine = to_o3d(target_pts).voxel_down_sample(v * 0.5)
         self.pcd_fine.estimate_normals(
-            o3d.geometry.KDTreeSearchParamHybrid(radius=self.voxel, max_nn=30))
+            o3d.geometry.KDTreeSearchParamHybrid(radius=v, max_nn=30))
 
     def align(self, source_pts: np.ndarray) -> tuple[np.ndarray, float]:
-        """Coarse global registration (FPFH + RANSAC) + point-to-plane ICP refine."""
+        """Coarse global registration (FPFH + RANSAC) + coarse-to-fine ICP."""
         reg = o3d.pipelines.registration
         v = self.voxel
 
-        src = to_o3d(source_pts).voxel_down_sample(v)
+        src = to_o3d(source_pts).voxel_down_sample(v * 2)
         src.estimate_normals(
-            o3d.geometry.KDTreeSearchParamHybrid(radius=v * 2, max_nn=30))
+            o3d.geometry.KDTreeSearchParamHybrid(radius=v * 4, max_nn=30))
         f_src = reg.compute_fpfh_feature(
-            src, o3d.geometry.KDTreeSearchParamHybrid(radius=v * 5, max_nn=100))
+            src, o3d.geometry.KDTreeSearchParamHybrid(radius=v * 10, max_nn=100))
 
-        ransac = reg.registration_ransac_based_on_feature_matching(
-            src, self.pcd, f_src, self.fpfh,
-            mutual_filter=False,
-            max_correspondence_distance=v * 1.5,
-            estimation_method=reg.TransformationEstimationPointToPoint(False),
-            ransac_n=3,
-            criteria=reg.RANSACConvergenceCriteria(50000, 0.999))
+        def ransac(mutual: bool, iters: int):
+            return reg.registration_ransac_based_on_feature_matching(
+                src, self.pcd, f_src, self.fpfh,
+                mutual_filter=mutual,
+                max_correspondence_distance=v * 2,
+                estimation_method=reg.TransformationEstimationPointToPoint(False),
+                ransac_n=3,
+                criteria=reg.RANSACConvergenceCriteria(iters, 0.999))
 
-        icp = reg.registration_icp(
-            to_o3d(source_pts), self.pcd_fine, v * 0.6, ransac.transformation,
-            reg.TransformationEstimationPointToPlane())
+        r = ransac(True, 20_000)
+        if r.fitness < 0.2:                     # ambiguous features -> broader search
+            r = ransac(False, 50_000)
 
-        return np.asarray(icp.transformation), float(icp.fitness)
+        icp1 = reg.registration_icp(
+            to_o3d(source_pts).voxel_down_sample(v), self.pcd_mid, v,
+            r.transformation, reg.TransformationEstimationPointToPlane(),
+            reg.ICPConvergenceCriteria(relative_fitness=1e-4, max_iteration=50))
+        if icp1.fitness < 0.1:                  # registration failed; keep RANSAC pose
+            return np.asarray(r.transformation), float(r.fitness)
+
+        icp2 = reg.registration_icp(
+            to_o3d(source_pts).voxel_down_sample(v * 0.5), self.pcd_fine, v * 0.5,
+            icp1.transformation, reg.TransformationEstimationPointToPlane(),
+            reg.ICPConvergenceCriteria(relative_fitness=1e-4, max_iteration=30))
+        best = icp2 if icp2.fitness >= icp1.fitness else icp1
+        return np.asarray(best.transformation), float(best.fitness)
