@@ -49,7 +49,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--align", default="none", choices=["none", "icp"],
                    help="RANSAC+ICP registration of test clouds to the prototypes")
     p.add_argument("--align-voxel", type=float, default=0.05,
-                   help="voxel size for RANSAC/ICP registration (unit-scale frame)")
+                   help="registration voxel; 0 = auto-select per category from "
+                        "{0.05, 0.03} via train-side cut registration")
     p.add_argument("--align-poses", type=int, default=1,
                    help="pose hypotheses per test cloud (>1 = multi-hypothesis "
                         "registration for symmetric objects)")

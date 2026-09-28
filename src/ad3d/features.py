@@ -171,6 +171,11 @@ class RegistrationTarget:
         self.pcd_mid = to_o3d(target_pts).voxel_down_sample(v)
         self.pcd_mid.estimate_normals(
             o3d.geometry.KDTreeSearchParamHybrid(radius=v * 2, max_nn=30))
+        # capped torch copy for residual computation (memory-safe cdist)
+        mid = np.asarray(self.pcd_mid.points, dtype=np.float32)
+        if mid.shape[0] > 30_000:
+            mid = mid[np.linspace(0, mid.shape[0] - 1, 30_000).astype(int)]
+        self._ref_mid = torch.from_numpy(mid)
 
         # fine level (ICP pass 2)
         self.pcd_fine = to_o3d(target_pts).voxel_down_sample(v * 0.5)
@@ -255,6 +260,32 @@ class RegistrationTarget:
         return candidates[:poses]
 
     # ------------------------------------------------------------------ #
+    def _res_src(self, source_pts: np.ndarray) -> np.ndarray:
+        """Deterministic capped downsample for residual evaluation."""
+        src = np.asarray(to_o3d(source_pts).voxel_down_sample(
+            self.voxel).points, dtype=np.float32)
+        if src.shape[0] > 20_000:
+            rng = np.random.default_rng(
+                zlib.crc32(np.ascontiguousarray(src, dtype=np.float64).tobytes())
+                & 0xFFFFFFFF)
+            src = src[np.sort(rng.choice(src.shape[0], 20_000, replace=False))]
+        return src
+
+    def _trimmed_residual(self, src: np.ndarray, T: np.ndarray) -> float:
+        """90th-percentile point-to-surface residual of a posed cloud."""
+        s = torch.from_numpy(src) @ torch.from_numpy(T[:3, :3].T.astype(np.float32)) \
+            + torch.from_numpy(T[:3, 3].astype(np.float32))
+        mins = []
+        step = max(1, 2 ** 24 // max(1, self._ref_mid.shape[0]))
+        for i in range(0, s.shape[0], step):
+            mins.append(torch.cdist(s[i:i + step], self._ref_mid).min(dim=1).values)
+        return float(torch.quantile(torch.cat(mins), 0.9))
+
+    def residual(self, source_pts: np.ndarray, T: np.ndarray) -> float:
+        """Trimmed point-to-surface residual of `source_pts` under pose `T`."""
+        return self._trimmed_residual(self._res_src(source_pts), T)
+
+    # ------------------------------------------------------------------ #
     def select_pose(self, source_pts: np.ndarray,
                     candidates: list[tuple[np.ndarray, float]]):
         """Pick the pose with the lowest trimmed point-to-surface residual.
@@ -266,17 +297,10 @@ class RegistrationTarget:
         a systematic misfit of a whole wrongly-posed region.
         Returns (index, (transform, fitness)).
         """
-        src = np.asarray(to_o3d(source_pts).voxel_down_sample(
-            self.voxel).points, dtype=np.float32)
-        ref = torch.from_numpy(
-            np.asarray(self.pcd_mid.points, dtype=np.float32))
-        s = torch.from_numpy(src)
+        src = self._res_src(source_pts)
         best_i, best_res = 0, None
         for i, (T, _f) in enumerate(candidates):
-            R = torch.from_numpy(T[:3, :3].T.astype(np.float32))   # row-vector form
-            t = torch.from_numpy(T[:3, 3].astype(np.float32))
-            d = torch.cdist(s @ R + t, ref).min(dim=1).values
-            res = float(torch.quantile(d, 0.9))
+            res = self._trimmed_residual(src, T)
             if best_res is None or res < best_res:
                 best_i, best_res = i, res
         return best_i, candidates[best_i]

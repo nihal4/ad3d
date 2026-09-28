@@ -44,7 +44,7 @@ class Config:
     cuts: int = 0                      # simulated single-view cuts per prototype
     # alignment
     align: str = "none"                # 'none' | 'icp'
-    align_voxel: float = 0.05          # RANSAC/ICP voxel (unit-scale frame)
+    align_voxel: float = 0.05          # RANSAC/ICP voxel; <=0 = auto per category
     align_poses: int = 1               # pose hypotheses per test cloud (>1 = multi-hypothesis)
     # preprocessing
     voxel: float = 0.01                # relative voxel size (cloud unit-normalized)
@@ -73,6 +73,7 @@ class Simple3DLite:
         self._ref_center: np.ndarray | None = None
         self._ref_scale: float | None = None
         self._reg_target: RegistrationTarget | None = None
+        self._align_voxel_used: float | None = None
 
     # ------------------------------------------------------------------ #
     # Preprocessing (kept identical for train and test!)
@@ -156,6 +157,55 @@ class Simple3DLite:
         return added
 
     # ------------------------------------------------------------------ #
+    # Adaptive registration resolution
+    # ------------------------------------------------------------------ #
+    def _select_voxel(self, raws: list[np.ndarray]) -> float:
+        """Pick the registration voxel per category from TRAINING data only.
+
+        r7 evidence: slender objects (airplane) need a fine voxel, bulky
+        near-symmetric ones (starfish) need a coarse one. We register
+        simulated single-view cuts of the other prototypes to the base
+        prototype at both candidate resolutions; lower trimmed residual
+        wins, with a stability penalty when mean ICP fitness drops below
+        0.95 (fine voxels can destabilise RANSAC/ICP). No test data is
+        touched - this is a legitimate per-category hyperparameter choice.
+        """
+        o3d.utility.random.seed(self.cfg.seed + 99)
+        rng = np.random.default_rng(self.cfg.seed + 555)
+        base_n = (raws[0] - self._ref_center) / self._ref_scale
+        cuts: list[np.ndarray] = []
+        for r in raws[1:]:
+            r_n = (r - self._ref_center) / self._ref_scale
+            d = r_n / np.maximum(np.linalg.norm(r_n, axis=1, keepdims=True), 1e-9)
+            for _ in range(2):
+                u = rng.normal(size=3)
+                u /= np.linalg.norm(u)
+                cut = r_n[d @ u > 0.15]
+                if cut.shape[0] >= 200:
+                    cuts.append(cut)
+        if not cuts:
+            print("  [align-voxel auto] no usable cuts; defaulting to 0.05")
+            return 0.05
+        best_vox, best_score = 0.05, None
+        for vox in (0.05, 0.03):
+            tgt = RegistrationTarget(base_n, voxel=vox)
+            res, fits = [], []
+            for cut in cuts:
+                T, f = tgt.align(cut)
+                if f >= 0.1:
+                    res.append(tgt.residual(cut, T))
+                    fits.append(f)
+            if not res:
+                continue
+            score = float(np.mean(res)) + max(0.0, 0.95 - float(np.mean(fits)))
+            print(f"  [align-voxel auto] voxel {vox:.2f}: cut-reg residual "
+                  f"{np.mean(res):.4f}  fitness {np.mean(fits):.2f}")
+            if best_score is None or score < best_score:
+                best_vox, best_score = vox, score
+        print(f"  [align-voxel auto] selected {best_vox:.2f}")
+        return best_vox
+
+    # ------------------------------------------------------------------ #
     # Fit / evaluate
     # ------------------------------------------------------------------ #
     def fit(self, cls: str):
@@ -170,7 +220,11 @@ class Simple3DLite:
             self._ref_scale = float(np.linalg.norm(
                 base - self._ref_center, axis=1).max()) or 1.0
             base_n = (base - self._ref_center) / self._ref_scale
-            self._reg_target = RegistrationTarget(base_n, voxel=self.cfg.align_voxel)
+            vox = self.cfg.align_voxel
+            if vox <= 0:                        # auto: pick from {0.05, 0.03}
+                vox = self._select_voxel(raws)
+            self._align_voxel_used = float(vox)
+            self._reg_target = RegistrationTarget(base_n, voxel=vox)
 
             proto_frames = [base_n]
             for r in raws[1:]:                       # mutually align prototypes
@@ -179,7 +233,7 @@ class Simple3DLite:
                 proto_frames.append(_transform(r_n, T))
             # denser registration target: the merged aligned prototypes
             self._reg_target = RegistrationTarget(
-                np.concatenate(proto_frames), voxel=self.cfg.align_voxel)
+                np.concatenate(proto_frames), voxel=vox)
         else:
             self._ref_center, self._reg_target = None, None
             proto_frames = [self._normalize(t) for t in trains]
@@ -230,6 +284,8 @@ class Simple3DLite:
         m = compute_metrics(obj_labels, obj_scores, point_gts, point_scores_all)
         if fitnesses:
             m["align_fitness_mean"] = float(np.mean(fitnesses))
+        if self._align_voxel_used is not None:
+            m["align_voxel"] = self._align_voxel_used
         if self.cfg.align_poses > 1 and test:
             m["pose_switch_rate"] = pose_switched / len(test)
         return m
@@ -252,6 +308,8 @@ def run_benchmark(cfg: Config, classes: list[str] | None = None,
                      if "align_fitness_mean" in m else "")
             if "pose_switch_rate" in m:
                 extra += f"  pose_switch {m['pose_switch_rate']:.0%}"
+            if "align_voxel" in m:
+                extra += f"  voxel {m['align_voxel']:.2f}"
             print(f"[{cfg.dataset}] {cls:>14s}  "
                   f"O-AUROC {m['o_auroc']:.3f}  "
                   f"P-AUROC {m['p_auroc']:.3f}  "
