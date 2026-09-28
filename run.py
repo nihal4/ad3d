@@ -50,6 +50,9 @@ def parse_args() -> argparse.Namespace:
                    help="RANSAC+ICP registration of test clouds to the prototypes")
     p.add_argument("--align-voxel", type=float, default=0.05,
                    help="voxel size for RANSAC/ICP registration (unit-scale frame)")
+    p.add_argument("--align-poses", type=int, default=1,
+                   help="pose hypotheses per test cloud (>1 = multi-hypothesis "
+                        "registration for symmetric objects)")
     p.add_argument("--voxel", type=float, default=0.01)
     p.add_argument("--points-budget", type=int, default=100_000)
     p.add_argument("--topk", type=int, default=1)
@@ -72,6 +75,7 @@ def main():
         cuts=args.cuts,
         align=args.align,
         align_voxel=args.align_voxel,
+        align_poses=args.align_poses,
         voxel=args.voxel,
         points_budget=args.points_budget,
         topk=args.topk,

@@ -206,16 +206,20 @@ def main():
     for tag, extra in [("none", {}),
                        ("cuts", {"cuts": 4}),
                        ("icp", {"align": "icp"}),
-                       ("icp+cuts", {"align": "icp", "cuts": 4})]:
+                       ("icp+cuts", {"align": "icp", "cuts": 4}),
+                       ("+poses", {"align": "icp", "cuts": 4, "align_poses": 3})]:
         cfg = Config(dataset="real3d", data_root=align_root, **small, **extra)
         r = run_benchmark(cfg, classes=["airplane"], verbose=False)
         results[tag] = r["__mean__"]
         fit = r["airplane"].get("align_fitness_mean")
         fit_s = f"  align_fitness {fit:.2f}" if fit is not None else ""
+        if "pose_switch_rate" in r["airplane"]:
+            fit_s += f"  pose_switch {r['airplane']['pose_switch_rate']:.0%}"
         print(f"  {tag:>8s}: O-AUROC {results[tag]['o_auroc']:.3f} | "
               f"P-AUROC {results[tag]['p_auroc']:.3f}{fit_s}")
     assert r["airplane"]["align_fitness_mean"] > 0.8, "registration quality too low"
     assert results["icp"]["p_auroc"] > 0.7, "aligned path should localize the bump"
+    assert 0.0 <= r["airplane"]["pose_switch_rate"] <= 1.0, "pose selection ran"
     # NOTE: no O-AUROC assertion here on purpose - the synthetic ellipsoid's
     # natural FPFH variation (pole vs equator) exceeds the anomaly signal, so
     # object-level AUROC is decided by sampling noise. The decisive experiment

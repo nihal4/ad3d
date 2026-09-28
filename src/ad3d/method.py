@@ -45,6 +45,7 @@ class Config:
     # alignment
     align: str = "none"                # 'none' | 'icp'
     align_voxel: float = 0.05          # RANSAC/ICP voxel (unit-scale frame)
+    align_poses: int = 1               # pose hypotheses per test cloud (>1 = multi-hypothesis)
     # preprocessing
     voxel: float = 0.01                # relative voxel size (cloud unit-normalized)
     points_budget: int = 100_000       # hard cap on points after voxel down
@@ -198,12 +199,19 @@ class Simple3DLite:
 
         obj_labels, obj_scores, point_gts, point_scores_all = [], [], [], []
         fitnesses: list[float] = []
+        pose_switched = 0
         for s in test:
             h = int(hashlib.md5(s.path.encode()).hexdigest()[:8], 16)
             if self.cfg.align == "icp" and self._reg_target is not None:
                 p_n = (np.asarray(s.points, dtype=np.float64)
                        - self._ref_center) / self._ref_scale
-                T, fitness = self._reg_target.align(p_n)
+                cands = self._reg_target.align_candidates(
+                    p_n, poses=self.cfg.align_poses, seed=self.cfg.seed)
+                if len(cands) > 1:
+                    i, (T, fitness) = self._reg_target.select_pose(p_n, cands)
+                    pose_switched += int(i != 0)
+                else:
+                    T, fitness = cands[0]
                 fitnesses.append(fitness)
                 pts, gt = self._finalize(_transform(p_n, T), s.gt, path_hash=h)
             else:
@@ -222,6 +230,8 @@ class Simple3DLite:
         m = compute_metrics(obj_labels, obj_scores, point_gts, point_scores_all)
         if fitnesses:
             m["align_fitness_mean"] = float(np.mean(fitnesses))
+        if self.cfg.align_poses > 1 and test:
+            m["pose_switch_rate"] = pose_switched / len(test)
         return m
 
 
@@ -240,6 +250,8 @@ def run_benchmark(cfg: Config, classes: list[str] | None = None,
         if verbose:
             extra = (f"  align_fitness {m['align_fitness_mean']:.2f}"
                      if "align_fitness_mean" in m else "")
+            if "pose_switch_rate" in m:
+                extra += f"  pose_switch {m['pose_switch_rate']:.0%}"
             print(f"[{cfg.dataset}] {cls:>14s}  "
                   f"O-AUROC {m['o_auroc']:.3f}  "
                   f"P-AUROC {m['p_auroc']:.3f}  "

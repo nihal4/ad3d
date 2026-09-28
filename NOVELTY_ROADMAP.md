@@ -67,10 +67,14 @@ matching (`o3d.pipelines.registration.registration_icp` — no new deps).
 Beat Reg2Inv's alignment and you are at SOTA O-AUROC.
 
 **Status: implemented** — `--align icp` (RANSAC+ICP to the mutually aligned
-prototypes) and `--cuts N` (single-view memory augmentation, the train_cut
-trick). Also try `--topk 32`: with max-pooling the object score is picked
-from the tail of the FPFH matching noise, and top-k pooling exploits that
-anomalies are *regions*, not points. Run the ablation grid in the notebook.
+prototypes), `--cuts N` (single-view memory augmentation, the train_cut
+trick), `--topk K` (region pooling; helps aliased categories, taxes small
+defects), and `--align-poses K` (**multi-hypothesis registration**: symmetric
+objects admit several geometrically valid poses; picking the wrong one
+inflates normal clouds' scores. Candidates come from perturbation restarts
++ short ICP; selection is geometric (trimmed point-to-surface residual) —
+never score-based, which adversarially hides defects). Ablation grid: see
+`real3d_ablation.csv` notes in the session — cuts +1.2, icp +2.4, additive.
 
 ## Direction F — Evaluation hygiene (do this regardless)
 
