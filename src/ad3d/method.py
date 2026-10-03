@@ -42,6 +42,8 @@ class Config:
     # memory
     coreset_ratio: float = 0.1
     cuts: int = 0                      # simulated single-view cuts per prototype
+    cuts_diverse: bool = False         # True: different cut directions per prototype
+                                       # (False reproduces all runs r1-r8 exactly)
     # alignment
     align: str = "none"                # 'none' | 'icp'
     align_voxel: float = 0.05          # RANSAC/ICP voxel; <=0 = auto per category
@@ -135,14 +137,18 @@ class Simple3DLite:
         _, center_feats = self.sample_features(pts)
         self.memory.add(center_feats)
 
-    def _simulated_cuts(self, pts: np.ndarray, n_cuts: int) -> int:
+    def _simulated_cuts(self, pts: np.ndarray, n_cuts: int, proto_idx: int = 0) -> int:
         """Augment the memory with simulated single-view scans of a prototype.
 
         Each cut keeps the directional cap visible from a random viewpoint
         (star-shape approximation) - the resulting scan-boundary artifacts
         match those of real single-view test clouds.
         """
-        rng = np.random.default_rng(self.cfg.seed + 1234)
+        # Legacy behaviour re-used the SAME seed for every prototype, so all
+        # prototypes got identical cut directions (n_cuts distinct views in
+        # total, not n_cuts * n_prototypes). cuts_diverse fixes that.
+        off = 7919 * proto_idx if self.cfg.cuts_diverse else 0
+        rng = np.random.default_rng(self.cfg.seed + 1234 + off)
         dirs = pts / np.maximum(np.linalg.norm(pts, axis=1, keepdims=True), 1e-9)
         added = 0
         for _ in range(n_cuts):
@@ -238,11 +244,11 @@ class Simple3DLite:
             self._ref_center, self._reg_target = None, None
             proto_frames = [self._normalize(t) for t in trains]
 
-        for pf in proto_frames:
+        for pi, pf in enumerate(proto_frames):
             pts, _ = self._finalize(pf)
             self._add_to_memory(pts)
             if self.cfg.cuts > 0:
-                self._simulated_cuts(pts, self.cfg.cuts)
+                self._simulated_cuts(pts, self.cfg.cuts, proto_idx=pi)
 
         self.memory.build(coreset_ratio=self.cfg.coreset_ratio, seed=self.cfg.seed)
 

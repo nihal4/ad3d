@@ -76,6 +76,18 @@ inflates normal clouds' scores. Candidates come from perturbation restarts
 never score-based, which adversarially hides defects). Ablation grid: see
 `real3d_ablation.csv` notes in the session — cuts +1.2, icp +2.4, additive.
 
+**Ablation outcome (Real3D-AD, O-AUROC):** baseline 0.637 -> cuts 0.649 ->
+icp 0.661 -> icp+cuts 0.673 -> +MHR (`--align-poses 6`) **0.689 = final
+Direction-A recipe** (P-AUROC 0.913, P-AUPR 0.366; FPFH only, no training).
+Adaptive per-category registration resolution (`--align-voxel 0`, train-side
+cut-registration selection) was tried and **REJECTED: 0.671 (-1.8)** — the
+train-side proxy does not transfer (prototype-cut registration is too clean
+vs real single-view scans; the trimmed residual is biased toward finer voxels
+by construction). Per-category oracle resolution would give 0.702 — the
+signal exists but is not legitimately capturable (paper discussion point).
+Fine voxels do improve point-level precision (pooled P-AUPR 0.227 -> 0.237)
+while hurting object-level detection.
+
 ## Direction F — Evaluation hygiene (do this regardless)
 
 - Run ≥3 seeds (`--seed`), report mean ± std. Real3D-AD has only ~100 test
@@ -92,3 +104,25 @@ never score-based, which adversarially hides defects). Ablation grid: see
 2. Add ICP pre-alignment (Direction E) behind a config flag → `--tag icp`.
 3. Compare per-category CSVs; if gemstone/starfish/duck/toffees improve,
    you have a paper seedling. If not, Direction C per-prototype banks next.
+
+---
+
+## Decision after r6 (2026-10-03) - supersedes "Direction B next"
+
+Facts: Simple3D (handcrafted FPFH-style MSND+LFSA) reaches 80.4 on Real3D-AD;
+we reach 68.9 with the same descriptor family, yet beat its Anomaly-ShapeNet
+numbers. So the Real3D-AD gap is most likely partial-scan handling /
+preprocessing, not representation. Point-MAE is therefore NOT the next step.
+
+Order of work:
+1. **Validity (must do):** 3 seeds for base / icp-cuts4 / mhr6.
+   `CONFIGS="base icp-cuts4 mhr6" bash scripts/run_parallel.sh <REAL_ROOT> 1 2   # 2 GPUs in parallel`
+   then `python scripts/aggregate_seeds.py results/`.
+2. **Cheap lever:** `--cuts-diverse` (legacy cuts reused one set of directions
+   for all prototypes). `CONFIGS="icp-cuts4-div mhr6-div" bash scripts/run_parallel.sh <REAL_ROOT> 0 1 2`.
+3. **Gate:** if mhr6-div >= mhr6 + 1.5 pts (beyond 2 std) -> adopt, then explore
+   cut realism (match test coverage). If <= noise -> keep mhr6 as final.
+4. **Only then Direction B**, as a *fused* FPFH+Point-MAE ablation, time-boxed
+   (1 week). Thesis stands without it: the contribution is the diagnosed,
+   ablated registration+cuts+MHR chain plus SOTA-class Anomaly-ShapeNet and
+   P-AUROC results.

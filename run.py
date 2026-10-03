@@ -46,6 +46,9 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--coreset", type=float, default=0.1)
     p.add_argument("--cuts", type=int, default=0,
                    help="augment memory with N simulated single-view cuts per prototype")
+    p.add_argument("--cuts-diverse", action="store_true",
+                   help="use different cut directions for each prototype "
+                        "(default off = legacy, identical directions)")
     p.add_argument("--align", default="none", choices=["none", "icp"],
                    help="RANSAC+ICP registration of test clouds to the prototypes")
     p.add_argument("--align-voxel", type=float, default=0.05,
@@ -74,6 +77,7 @@ def main():
         smooth_k=args.smooth_k,
         coreset_ratio=args.coreset,
         cuts=args.cuts,
+        cuts_diverse=args.cuts_diverse,
         align=args.align,
         align_voxel=args.align_voxel,
         align_poses=args.align_poses,
