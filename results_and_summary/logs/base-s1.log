@@ -1,0 +1,23 @@
+[ad3d] dataset=real3d  device=cuda (Tesla T4)  classes=12
+[ad3d] config: Config(data_root='/kaggle/input/datasets/smnihalahmed/real3d-ad-pcd/Real3D-AD-PCD', dataset='real3d', max_nn=100, n_scales=3, num_group=2048, group_size=128, smooth_k=12, coreset_ratio=0.1, cuts=0, cuts_diverse=False, align='none', align_voxel=0.05, align_poses=1, voxel=0.01, points_budget=100000, topk=1, device='auto', seed=1, extra={})
+[real3d]       airplane  O-AUROC 0.639  P-AUROC 0.871  P-AUPR 0.159  (50/100 anomalous)
+[real3d]       candybar  O-AUROC 0.743  P-AUROC 0.964  P-AUPR 0.440  (50/100 anomalous)
+[real3d]            car  O-AUROC 0.515  P-AUROC 0.876  P-AUPR 0.139  (50/100 anomalous)
+[real3d]        chicken  O-AUROC 0.605  P-AUROC 0.839  P-AUPR 0.217  (54/106 anomalous)
+[real3d]        diamond  O-AUROC 0.971  P-AUROC 0.991  P-AUPR 0.846  (50/100 anomalous)
+[real3d]           duck  O-AUROC 0.773  P-AUROC 0.931  P-AUPR 0.188  (50/100 anomalous)
+[real3d]           fish  O-AUROC 0.664  P-AUROC 0.932  P-AUPR 0.409  (50/100 anomalous)
+[real3d]       gemstone  O-AUROC 0.651  P-AUROC 0.930  P-AUPR 0.517  (50/100 anomalous)
+[real3d]       seahorse  O-AUROC 0.554  P-AUROC 0.806  P-AUPR 0.201  (50/100 anomalous)
+[real3d]          shell  O-AUROC 0.323  P-AUROC 0.850  P-AUPR 0.196  (48/100 anomalous)
+[real3d]       starfish  O-AUROC 0.669  P-AUROC 0.781  P-AUPR 0.171  (50/100 anomalous)
+[real3d]        toffees  O-AUROC 0.589  P-AUROC 0.790  P-AUPR 0.092  (50/100 anomalous)
+
+=== Mean over 12 categories ===
+         o_auroc: 0.6414
+         p_auroc: 0.8800
+          p_aupr: 0.2979
+  p_auroc_pooled: 0.8985
+   p_aupr_pooled: 0.1937
+
+[ad3d] saved: results/base-s1_real3d_20261003-134516.csv / .json

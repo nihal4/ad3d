@@ -12,6 +12,22 @@
 | r7 | MHR6, voxel 0.03, 3 cats only | (airplane +10.0, starfish -5.6 vs r6) | | | | r7-*.csv |
 | r8 | r6+auto-voxel | 0.671 | 0.911 | 0.369 | - | (not in repo) NEGATIVE |
 
+## Phase 3 - seeds (Real3D-AD, 12 cats, 1206 test samples each)
+| config | seeds | O-AUROC | P-AUROC | P-AUPR | pooled P-AUPR |
+|---|---|---|---|---|---|
+| base | 0,1,2 | 0.6362 +/- 0.0057 (0.637/0.641/0.630) | 0.8779 +/- 0.0022 | 0.2949 +/- 0.0027 | 0.1911 +/- 0.0029 |
+| icp-cuts4 | 0 only (r3) | 0.673 | 0.909 | 0.361 | 0.218 |
+| mhr6 | 0 only (r6) | 0.689 | 0.913 | 0.366 | 0.227 |
+
+- base-s0 reproduces the earlier reference (0.6370) EXACTLY -> pipeline is deterministic and the
+  cuts_diverse refactor did not change default behaviour.
+- Seed noise on the 12-cat mean is ~0.6 pts O-AUROC; per-category noise is 1-3 pts
+  (shell 0.32-0.38, starfish 0.61-0.67, duck 0.72-0.77). Per-category claims need multi-seed support.
+- icp-cuts4 = +3.7 pts and mhr6 = +5.3 pts over base mean (about 6x and 9x the base seed std):
+  headline gain very likely real. mhr6 vs icp-cuts4 (+1.6) is only ~2 std -> NEEDS seeds 1,2 (3c).
+- Timing (Kaggle T4x2, 4 vCPU): 2 concurrent base jobs ~2h15 each; the same job ALONE ~1h25.
+  So 2-GPU parallelism only gives ~1.25x over sequential (CPU-bound). Do not expect 2x.
+
 ## Anomaly-ShapeNet (40 cats): O 0.881/0.882, P-AUROC 0.935, P-AUPR 0.673 (2 runs). CSVs not in repo.
 
 ## Caveats on record

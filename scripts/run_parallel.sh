@@ -9,6 +9,9 @@
 # MODE 2: split ONE config+seed by category across the GPUs, then merge.
 #   SPLIT=1 CONFIGS="mhr6" bash scripts/run_parallel.sh <REAL_ROOT> 0
 #
+# MEASURED (Kaggle T4x2, 4 vCPU, base config): 2 concurrent jobs ~2h15 each vs ~1h25 alone,
+# i.e. only ~1.25x faster than sequential - the CPU, not the GPU, is the bottleneck.
+#
 # Env: NGPU (default: detected, else 2)  CONFIGS  SPLIT=1
 set -uo pipefail
 ROOT="$1"; shift
