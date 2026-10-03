@@ -23,7 +23,7 @@
   All r1-r8 results include that behaviour. `--cuts-diverse` fixes it (new, unrun).
 
 ## Pending (in order)
-1. seeds 1,2 for: base, icp-cuts4, mhr6   (seed 0 exists)
+1. base seeds 0,1,2; icp-cuts4 + mhr6 seeds 1,2 (seed 0 = r3/r6 CSVs; clean base seed-0 CSV not in repo)
 2. seeds 0,1,2 for: icp-cuts4-div, mhr6-div
 3. decision gate -> see NOVELTY_ROADMAP.md "Decision after r9"
 

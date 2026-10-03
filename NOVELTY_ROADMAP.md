@@ -115,8 +115,9 @@ numbers. So the Real3D-AD gap is most likely partial-scan handling /
 preprocessing, not representation. Point-MAE is therefore NOT the next step.
 
 Order of work:
-1. **Validity (must do):** 3 seeds for base / icp-cuts4 / mhr6.
-   `CONFIGS="base icp-cuts4 mhr6" bash scripts/run_parallel.sh <REAL_ROOT> 1 2   # 2 GPUs in parallel`
+1. **Validity (must do):** 3 seeds for base / icp-cuts4 / mhr6. Seed 0 exists only for icp-cuts4 (r3) and mhr6 (r6);
+   base must be run for seeds 0,1,2 (notebook cells 3a-3e do this).
+   `CONFIGS="base" bash scripts/run_parallel.sh <REAL_ROOT> 0 1 2` and `CONFIGS="icp-cuts4 mhr6" bash scripts/run_parallel.sh <REAL_ROOT> 1 2`
    then `python scripts/aggregate_seeds.py results/`.
 2. **Cheap lever:** `--cuts-diverse` (legacy cuts reused one set of directions
    for all prototypes). `CONFIGS="icp-cuts4-div mhr6-div" bash scripts/run_parallel.sh <REAL_ROOT> 0 1 2`.
