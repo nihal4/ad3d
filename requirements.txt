@@ -5,3 +5,4 @@ pandas>=2.0
 tqdm
 huggingface_hub
 gdown
+tifffile

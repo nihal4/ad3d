@@ -120,6 +120,15 @@ def read_any_cloud(path: str) -> np.ndarray:
     ext = os.path.splitext(path)[1].lower()
     if ext in (".pcd", ".ply"):
         return read_pcd(path)
+    if ext in (".tif", ".tiff"):
+        # MVTec-3D style organised point cloud: (H, W, 3) xyz image, zeros = no point
+        import tifffile
+        a = np.asarray(tifffile.imread(path), dtype=np.float32)
+        pts = a.reshape(-1, a.shape[-1])[:, :3]
+        pts = pts[np.isfinite(pts).all(axis=1) & np.any(pts != 0, axis=1)]
+        if pts.shape[0] == 0:
+            raise ValueError(f"Empty point cloud: {path}")
+        return pts
     try:
         arr = pd.read_csv(path, sep=r"\s+", header=None, comment="#").to_numpy()
     except Exception:
@@ -133,21 +142,25 @@ def read_any_cloud(path: str) -> np.ndarray:
     return pts
 
 
-CUT_EXTS = (".asc", ".txt", ".xyz", ".pcd", ".ply")
+CUT_EXTS = (".asc", ".txt", ".xyz", ".pcd", ".ply", ".tif", ".tiff")
 
 
 def find_train_cut_paths(cut_root: str, cls: str) -> list[str]:
-    """Pre-cut single-view TRAINING clouds (e.g. the 'Cut Training Data' release of
-    GLFM/Simple3D: <cut_root>/<cls>/train_cut/*.asc). Falls back to a recursive search
-    for a '<cls>/train_cut' folder anywhere below cut_root."""
-    cands = [os.path.join(cut_root, cls, "train_cut")]
-    cands += sorted(glob.glob(os.path.join(cut_root, "**", cls, "train_cut"), recursive=True))
+    """Pre-cut single-view TRAINING clouds. Supported layouts (first match wins):
+      <cut_root>/<cls>/train_cut/*.asc            (Simple3D code: real3d_train_cut)
+      <cut_root>/<cls>/train/good/xyz/*.tiff      (GLFM 'Cut Training Data' release: Real3D-mvtec, MVTec-3D format)
+    plus a recursive search for either folder below cut_root. Only TRAIN data is read from here;
+    the test set always comes from the official Real3D-AD release (--data-root)."""
+    rel = [os.path.join("train_cut"), os.path.join("train", "good", "xyz")]
+    cands = [os.path.join(cut_root, cls, r) for r in rel]
+    for r in rel:
+        cands += sorted(glob.glob(os.path.join(cut_root, "**", cls, r), recursive=True))
     for d in cands:
         paths = sorted(p for p in glob.glob(os.path.join(d, "*")) if p.lower().endswith(CUT_EXTS))
         if paths:
             return paths
-    raise FileNotFoundError(f"No train_cut clouds for '{cls}' under {cut_root} "
-                            f"(expected <root>/{cls}/train_cut/*.asc)")
+    raise FileNotFoundError(f"No training cut clouds for '{cls}' under {cut_root} "
+                            f"(expected <root>/{cls}/train_cut/*.asc or <root>/{cls}/train/good/xyz/*.tiff)")
 
 
 def load_train_cut(cut_root: str, cls: str) -> list[tuple[str, np.ndarray]]:

@@ -165,3 +165,7 @@
 3. Multi-scale descriptor set (e.g. 10/30/90) - principled replacement for per-category scale.
 4. The 3m hyper-parameter screen is deprioritised (second-order).
 Then: freeze config -> seeds 1,2 -> ShapeNet 3 seeds.
+- 2026-10-04 21:20: GLFM "Cut Training Data" (Drive 1l6jF5nrzgw-6EgjRjGw6071l1CyF_ep2, 1.07 GB zip) = `Real3D-mvtec/<cls>/{train,test}`
+  in MVTec-3D format (xyz/*.tiff + rgb/gt png). TRAIN: 8 cuts per category (airplane, shell: 4; duck: 9).
+  Its TEST split is smaller (~49 per category: e.g. airplane good 24 / bulge 20 / sink 5) than the official 100 -> NOT used;
+  we always test on the official Real3D-AD test set. Loader: datasets.find_train_cut_paths supports train/good/xyz/*.tiff.
