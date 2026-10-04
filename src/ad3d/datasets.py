@@ -115,6 +115,45 @@ def load_train(root: str, dataset: str, cls: str) -> list[np.ndarray]:
     return [read_pcd(p) for p in paths]
 
 
+def read_any_cloud(path: str) -> np.ndarray:
+    """Read xyz from .pcd/.ply (open3d) or a whitespace/comma text file (.asc/.txt/.xyz)."""
+    ext = os.path.splitext(path)[1].lower()
+    if ext in (".pcd", ".ply"):
+        return read_pcd(path)
+    try:
+        arr = pd.read_csv(path, sep=r"\s+", header=None, comment="#").to_numpy()
+    except Exception:
+        arr = pd.read_csv(path, sep=",", header=None, comment="#").to_numpy()
+    if arr.ndim == 1 or arr.shape[1] < 3:
+        arr = pd.read_csv(path, sep=",", header=None, comment="#").to_numpy()
+    pts = np.asarray(arr[:, :3], dtype=np.float32)
+    pts = pts[np.isfinite(pts).all(axis=1)]
+    if pts.shape[0] == 0:
+        raise ValueError(f"Empty point cloud: {path}")
+    return pts
+
+
+CUT_EXTS = (".asc", ".txt", ".xyz", ".pcd", ".ply")
+
+
+def find_train_cut_paths(cut_root: str, cls: str) -> list[str]:
+    """Pre-cut single-view TRAINING clouds (e.g. the 'Cut Training Data' release of
+    GLFM/Simple3D: <cut_root>/<cls>/train_cut/*.asc). Falls back to a recursive search
+    for a '<cls>/train_cut' folder anywhere below cut_root."""
+    cands = [os.path.join(cut_root, cls, "train_cut")]
+    cands += sorted(glob.glob(os.path.join(cut_root, "**", cls, "train_cut"), recursive=True))
+    for d in cands:
+        paths = sorted(p for p in glob.glob(os.path.join(d, "*")) if p.lower().endswith(CUT_EXTS))
+        if paths:
+            return paths
+    raise FileNotFoundError(f"No train_cut clouds for '{cls}' under {cut_root} "
+                            f"(expected <root>/{cls}/train_cut/*.asc)")
+
+
+def load_train_cut(cut_root: str, cls: str) -> list[tuple[str, np.ndarray]]:
+    return [(p, read_any_cloud(p)) for p in find_train_cut_paths(cut_root, cls)]
+
+
 def load_test(root: str, dataset: str, cls: str) -> list[TestSample]:
     """Return all test samples for one category (normal + anomalous)."""
     samples: list[TestSample] = []

@@ -117,3 +117,51 @@
 - SELECTION BIAS: scale and config were chosen on Real3D-AD test results (6 scales, several configs). Use ShapeNet as an
   independent check of the scale, and report the selection procedure in the thesis.
 - Next (3k): mhr6-nn10, base-nn6; then seeds 1,2 for the final base and mhr6; ShapeNet 3 seeds at the final scale.
+
+## 3k result (2026-10-04): FINAL CONFIG candidate = mhr6-nn10 (Real3D-AD, seed 0, single run)
+| config | O-AUROC | P-AUROC | P-AUPR per-cat | P-AUPR pooled |
+|---|---|---|---|---|
+| base-nn6  | 0.729 | 0.903 | 0.405 | 0.296 |
+| base-nn10 | 0.744 | 0.905 | 0.399 | 0.304 |
+| mhr6-nn10 | **0.783** | **0.923** | **0.431** | **0.327** |
+- Scale floor at nn10 (nn6 worse; normals use 10 neighbours). Registration adds +3.9 O at nn10 (base-nn10 -> mhr6-nn10), +1.8 P-AUROC, +3.2 P-AUPR.
+- mhr6-nn10 per category O-AUROC: airplane 75.1, candybar 97.7, car 80.7, chicken 70.4, diamond 93.6, duck 80.2, fish 86.9,
+  gemstone 73.1, seahorse 55.1, shell 67.0, starfish 79.4, toffees 80.5. Airplane no longer collapses (82->61 seen at nn20).
+- vs Simple3D published: shell 67.0 vs 51.4 (ours better); airplane 75.1 vs 76.5 (par); chicken 70.4 vs 82.6; car 80.7 vs 98.1;
+  seahorse 55.1 vs 93.0 (largest remaining gaps: seahorse, car, chicken).
+- Registration diagnostics (mhr6-nn10): mean fitness 0.967 (lowest: gemstone 0.89, shell 0.90, chicken 0.93); pose-switch 52% diamond, 27% starfish, 13% candybar/shell.
+- SELECTION BIAS: scale/config chosen on Real3D-AD test; seeds 1,2 reduce seed noise but not that bias. ShapeNet (3f) is the independent check.
+- Pending: seeds 1,2 for mhr6-nn10 and base-nn10 (3l); ShapeNet base vs base-nn10 x3 seeds (3f); then set Config.max_nn default.
+
+## Plan change (2026-10-04, user decision): improve first, seeds once on the frozen config
+- scripts/screen.sh: one-factor screens on car, seahorse, chicken (base-nn10 reference already on disk). Presets: g64 g256
+  ng1024 ng4096 sm6 sm24 cs20 vx005 vx02 top32. Overfitting guard: winners are validated on all 12 categories before adoption.
+- Selection-bias note: every test-tuned choice (scale, screens) is reported as such; ShapeNet (3f) is the held-out check.
+
+## Analysis + decision (2026-10-04 evening): why we trail Simple3D on Real3D-AD, and what to run next
+### Evidence from Simple3D's OFFICIAL code (github.com/hustCYQ/MiniShift-Simple3D, cloned 2026-10-04)
+- data/real3d.py: TRAIN = `real3d_train_cut/<cls>/train_cut/*.asc` (pre-cut single-view clouds), NOT the 4 official 360-degree
+  prototypes. Test = their own .txt export with the label column. Voxel: ABSOLUTE 0.15 in raw units, no normalisation, no point cap.
+- The cut data is GLFM's "Cut Training Data" release (github.com/hustCYQ/GLFM-Multi-class-3DAD README, Google Drive
+  id 1l6jF5nrzgw-6EgjRjGw6071l1CyF_ep2). The official Real3D-AD repo (M-3LAB/Real3D-AD) has NO train_cut data.
+- feature_extractors/features.py: object score on Real3D-AD = MEAN of the point-score map (`s = torch.mean(s_map)`);
+  ShapeNet = mean of top-80. Coreset 5% (sparse random projection). Point score smoothing: FPS 1024 centres, k=12, mean.
+- README command for Real3D-AD: --num_group 4096 --group_size 128 --max_nn 40 --use_MSND --use_LFSA.
+  MSND code concatenates [s1,s2] then cat([.., s2, s3]) -> scale 2 is duplicated (40/80/80/120).
+- Pixel AUROC = roc_auc_score over ALL points of ALL test samples of a category (= our POOLED convention).
+  => Simple3D's 92.3 P-AUROC compares with our pooled P-AUROC: mhr6-nn10 = 93.0 (pooled), i.e. already above.
+- CONSEQUENCE: Simple3D's 80.4 O-AUROC uses (a) curated single-view training cuts and (b) a mean object score. Our
+  numbers use the official 360-degree prototypes. Comparisons must state the training-data protocol.
+### Evidence from our own runs (seed 0)
+- Per-category best scale differs (diamond 100, starfish 60, chicken/gemstone/seahorse 40, airplane 20, car/candybar/fish/toffees 10,
+  duck/shell 6). Oracle per-category scale = 78.0 (test-selected, NOT legitimate) vs single nn10 = 74.4 -> multi-scale headroom ~3.6.
+- Registration gain at nn10 per category: shell +17.0, starfish +7.5, gemstone +7.3, duck +6.8, chicken +6.1, car +3.5,
+  seahorse +2.8, diamond +1.9, candybar +0.5, airplane -1.3, fish -1.5, toffees -3.9.
+- Seahorse is insensitive to scale (51-58) and registers well (fitness 0.97): its gap is not scale/alignment -> likely training-view mismatch.
+### Decision (priority order)
+1. STEP 4: train on the published cut data (cut-nn10, cut-mhr6-nn10). Directly tests the hypothesis that the training-view
+   protocol explains most of the 2-point gap to Simple3D and the seahorse/car gaps. Code: --train-cut-root (+ cuts registered like test clouds).
+2. Object-score rule (max vs mean vs top-k): now computed OFFLINE from *_scores.json (scripts/score_rules.py) - no extra GPU time.
+3. Multi-scale descriptor set (e.g. 10/30/90) - principled replacement for per-category scale.
+4. The 3m hyper-parameter screen is deprioritised (second-order).
+Then: freeze config -> seeds 1,2 -> ShapeNet 3 seeds.

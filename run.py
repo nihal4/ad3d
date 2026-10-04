@@ -59,7 +59,12 @@ def parse_args() -> argparse.Namespace:
                         "registration for symmetric objects)")
     p.add_argument("--voxel", type=float, default=0.01)
     p.add_argument("--points-budget", type=int, default=100_000)
-    p.add_argument("--topk", type=int, default=1)
+    p.add_argument("--topk", type=int, default=1,
+                   help="object score: 1 = max point score, k>1 = mean of top-k, 0 = mean of ALL points (Simple3D on Real3D-AD)")
+    p.add_argument("--train-cut-root", default="",
+                   help="train on pre-cut single-view clouds <root>/<cls>/train_cut/* instead of the 360-degree prototypes")
+    p.add_argument("--train-cut-with-protos", action="store_true",
+                   help="with --train-cut-root: also keep the full prototypes in the memory bank")
     p.add_argument("--device", default="auto")
     p.add_argument("--seed", type=int, default=0)
     return p.parse_args()
@@ -84,6 +89,8 @@ def main():
         voxel=args.voxel,
         points_budget=args.points_budget,
         topk=args.topk,
+        train_cut_root=args.train_cut_root,
+        train_cut_with_protos=args.train_cut_with_protos,
         device=args.device,
         seed=args.seed,
     )
@@ -98,7 +105,8 @@ def main():
           f"  classes={len(classes)}")
     print(f"[ad3d] config: {cfg}")
 
-    rows = run_benchmark(cfg, classes=classes)
+    scores: dict = {}
+    rows = run_benchmark(cfg, classes=classes, scores_out=scores)
 
     os.makedirs(args.out, exist_ok=True)
     stamp = _dt.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -109,7 +117,9 @@ def main():
     df.to_csv(base + ".csv")
     with open(base + ".json", "w") as f:
         json.dump({"config": cfg.__dict__, "results": rows}, f, indent=2)
-    print(f"\n[ad3d] saved: {base}.csv / .json")
+    with open(base + "_scores.json", "w") as f:   # per-sample object-score stats (offline analysis)
+        json.dump(scores, f)
+    print(f"\n[ad3d] saved: {base}.csv / .json / _scores.json")
 
 
 if __name__ == "__main__":

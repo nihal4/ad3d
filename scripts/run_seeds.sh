@@ -5,6 +5,7 @@
 set -euo pipefail
 ROOT="$1"; shift
 SEEDS="${@:-0 1 2}"
+CUT_ROOT="${CUT_ROOT:-}"   # folder with <cls>/train_cut/* (GLFM/Simple3D "Cut Training Data"); needed by cut-* configs
 declare -A CFG=(
   [base]=""
   [cuts4]="--cuts 4"
@@ -22,6 +23,11 @@ declare -A CFG=(
   [base-nn6]="--max-nn 6"
   [icp-cuts4-nn10]="--align icp --cuts 4 --max-nn 10"
   [mhr6-nn10]="--align icp --cuts 4 --align-poses 6 --max-nn 10"
+  [base-nn10-mean]="--max-nn 10 --topk 0"
+  [cut-nn10]="--max-nn 10 --train-cut-root ${CUT_ROOT}"
+  [cut-icp-nn10]="--align icp --max-nn 10 --train-cut-root ${CUT_ROOT}"
+  [cut-mhr6-nn10]="--align icp --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT}"
+  [cut-mhr6-nn10-protos]="--align icp --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT} --train-cut-with-protos"
   [icp-cuts4-nn20]="--align icp --cuts 4 --max-nn 20"
   [mhr6-nn20]="--align icp --cuts 4 --align-poses 6 --max-nn 20"
   [icp-cuts4-nn40]="--align icp --cuts 4 --max-nn 40"

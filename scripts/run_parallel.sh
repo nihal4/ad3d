@@ -20,6 +20,7 @@ SEEDS="${@:-0 1 2}"
 NGPU="${NGPU:-$(python -c 'import torch;print(max(1,torch.cuda.device_count()))' 2>/dev/null || echo 2)}"
 NCPU="$(nproc)"; THREADS=$(( NCPU / NGPU )); [ "$THREADS" -lt 1 ] && THREADS=1
 
+CUT_ROOT="${CUT_ROOT:-}"   # folder with <cls>/train_cut/* (GLFM/Simple3D "Cut Training Data"); needed by cut-* configs
 declare -A CFG=(
   [base]=""
   [cuts4]="--cuts 4"
@@ -37,11 +38,17 @@ declare -A CFG=(
   [base-nn6]="--max-nn 6"
   [icp-cuts4-nn10]="--align icp --cuts 4 --max-nn 10"
   [mhr6-nn10]="--align icp --cuts 4 --align-poses 6 --max-nn 10"
+  [base-nn10-mean]="--max-nn 10 --topk 0"
+  [cut-nn10]="--max-nn 10 --train-cut-root ${CUT_ROOT}"
+  [cut-icp-nn10]="--align icp --max-nn 10 --train-cut-root ${CUT_ROOT}"
+  [cut-mhr6-nn10]="--align icp --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT}"
+  [cut-mhr6-nn10-protos]="--align icp --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT} --train-cut-with-protos"
   [icp-cuts4-nn20]="--align icp --cuts 4 --max-nn 20"
   [mhr6-nn20]="--align icp --cuts 4 --align-poses 6 --max-nn 20"
   [icp-cuts4-nn40]="--align icp --cuts 4 --max-nn 40"
   [mhr6-nn40]="--align icp --cuts 4 --align-poses 6 --max-nn 40"
 )
+for _c in ${CONFIGS:-}; do case "$_c" in cut-*) [ -z "$CUT_ROOT" ] && { echo "[!] config $_c needs CUT_ROOT=<folder with <cls>/train_cut>"; exit 1; };; esac; done
 CONFIGS="${CONFIGS:-base icp-cuts4 mhr6}"
 DATASET="${DATASET:-real3d}"
 if [ "$DATASET" != "real3d" ] && [ "${SPLIT:-0}" = "1" ]; then echo "SPLIT=1 supports real3d only"; exit 1; fi

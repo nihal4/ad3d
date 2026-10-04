@@ -151,3 +151,10 @@ Simple3D uses FPFH neighbourhoods 40/80/120; we use 100/200/300 and beat the pap
 on Real3D-AD, almost entirely on car/seahorse/chicken/airplane. Run `base-nn40`, `base-nn60` (cell 3g, seed 0, ~2.5 h).
 If base jumps well above 0.637 -> adopt the better scale for the aligned recipe (`mhr6-nn40`, 3 seeds) and re-check ShapeNet.
 If not -> the gap is preprocessing (voxel / points budget / train_cut) - inspect Simple3D's code before registration work.
+
+## Decision after reading Simple3D's code (2026-10-04)
+Simple3D's Real3D-AD result trains on GLFM's pre-cut single-view clouds and scores objects by the mean point score.
+Next experiment = the same training data in our pipeline (`--train-cut-root`, notebook STEP 4), with and without our
+registration (cuts are registered to the prototypes exactly like test clouds). Thesis framing either way:
+(a) protocol matters: 360-degree prototypes vs curated cuts is a hidden variable in published comparisons;
+(b) our contribution is measured under BOTH protocols. Next levers after that: offline score-rule analysis, multi-scale set.

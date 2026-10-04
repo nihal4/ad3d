@@ -16,6 +16,7 @@ Two optional helpers target the Real3D-AD 360°-train vs single-view-test gap
 from __future__ import annotations
 
 import hashlib
+import os
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -25,7 +26,7 @@ from . import datasets as D
 from .features import RegistrationTarget, compute_fpfh_ms, lfsa
 from .memory import MemoryBank
 from .metrics import compute_metrics
-from .scoring import object_score, point_scores
+from .scoring import object_score, object_score_stats, point_scores
 
 
 @dataclass
@@ -53,7 +54,12 @@ class Config:
     voxel: float = 0.01                # relative voxel size (cloud unit-normalized)
     points_budget: int = 100_000       # hard cap on points after voxel down
     # scoring
-    topk: int = 1                      # object score = mean of top-k point scores
+    topk: int = 1                      # object score: 1 = max, k>1 = mean of top-k, <=0 = mean of all points
+    # training data
+    train_cut_root: str = ""           # if set: train on pre-cut single-view clouds <root>/<cls>/train_cut/*
+                                       # (GLFM/Simple3D 'Cut Training Data'); official prototypes then only
+                                       # serve as the registration target (align=icp)
+    train_cut_with_protos: bool = False  # also keep the full prototypes in the memory bank
     # misc
     device: str = "auto"
     seed: int = 0
@@ -245,11 +251,40 @@ class Simple3DLite:
             self._ref_center, self._reg_target = None, None
             proto_frames = [self._normalize(t) for t in trains]
 
-        for pi, pf in enumerate(proto_frames):
-            pts, _ = self._finalize(pf)
-            self._add_to_memory(pts)
-            if self.cfg.cuts > 0:
-                self._simulated_cuts(pts, self.cfg.cuts, proto_idx=pi)
+        use_protos = (not self.cfg.train_cut_root) or self.cfg.train_cut_with_protos
+        if use_protos:
+            for pi, pf in enumerate(proto_frames):
+                pts, _ = self._finalize(pf)
+                self._add_to_memory(pts)
+                if self.cfg.cuts > 0:
+                    self._simulated_cuts(pts, self.cfg.cuts, proto_idx=pi)
+
+        self.train_cut_info = {}
+        if self.cfg.train_cut_root:
+            cut_fits = []
+            cut_list = D.load_train_cut(self.cfg.train_cut_root, cls)
+            for path, c in cut_list:
+                h = int(hashlib.md5(path.encode()).hexdigest()[:8], 16)
+                if self.cfg.align == "icp" and self._reg_target is not None:
+                    # register the cut to the merged prototypes exactly like a test cloud
+                    c_n = (np.asarray(c, dtype=np.float64) - self._ref_center) / self._ref_scale
+                    cands = self._reg_target.align_candidates(
+                        c_n, poses=self.cfg.align_poses, seed=self.cfg.seed)
+                    if len(cands) > 1:
+                        _, (T, fit) = self._reg_target.select_pose(c_n, cands)
+                    else:
+                        T, fit = cands[0]
+                    cut_fits.append(fit)
+                    pts, _ = self._finalize(_transform(c_n, T), path_hash=h)
+                else:
+                    pts, _ = self.preprocess(c, path_hash=h)
+                if pts.shape[0] >= 200:
+                    self._add_to_memory(pts)
+            self.train_cut_info = {"train_cut_n": len(cut_list)}
+            if cut_fits:
+                self.train_cut_info["train_cut_fit_mean"] = float(np.mean(cut_fits))
+            print(f"  [train-cut] {cls}: {len(cut_list)} cut clouds"
+                  + (f", registration fitness {np.mean(cut_fits):.2f}" if cut_fits else ""), flush=True)
 
         self.memory.build(coreset_ratio=self.cfg.coreset_ratio, seed=self.cfg.seed)
 
@@ -259,6 +294,7 @@ class Simple3DLite:
             o3d.utility.random.seed(self.cfg.seed + 7)
 
         obj_labels, obj_scores, point_gts, point_scores_all = [], [], [], []
+        self.sample_records: list[dict] = []
         fitnesses: list[float] = []
         pose_switched = 0
         for s in test:
@@ -276,6 +312,7 @@ class Simple3DLite:
                 fitnesses.append(fitness)
                 pts, gt = self._finalize(_transform(p_n, T), s.gt, path_hash=h)
             else:
+                fitness = None
                 pts, gt = self.preprocess(s.points, s.gt, path_hash=h)
 
             centers, center_feats = self.sample_features(pts)
@@ -285,6 +322,12 @@ class Simple3DLite:
                                     device=self.cfg.device)
             obj_labels.append(s.label)
             obj_scores.append(object_score(p_scores, topk=self.cfg.topk))
+            rec = {"file": os.path.basename(s.path), "label": int(s.label),
+                   "n_points": int(pts.shape[0]), "n_anom_points": int(gt.sum())}
+            rec.update(object_score_stats(p_scores))
+            if fitness is not None:
+                rec["fitness"] = float(fitness)
+            self.sample_records.append(rec)
             point_gts.append(gt)
             point_scores_all.append(p_scores)
 
@@ -295,12 +338,14 @@ class Simple3DLite:
             m["align_voxel"] = self._align_voxel_used
         if self.cfg.align_poses > 1 and test:
             m["pose_switch_rate"] = pose_switched / len(test)
+        m.update(getattr(self, "train_cut_info", {}) or {})
         return m
 
 
 def run_benchmark(cfg: Config, classes: list[str] | None = None,
-                  verbose: bool = True):
-    """Run every category, return {category: metrics} plus the mean row."""
+                  verbose: bool = True, scores_out: dict | None = None):
+    """Run every category, return {category: metrics} plus the mean row.
+    If `scores_out` is a dict, it is filled with per-sample score records per category."""
     import pandas as pd
 
     classes = classes or D.get_classes(cfg.dataset)
@@ -310,6 +355,8 @@ def run_benchmark(cfg: Config, classes: list[str] | None = None,
         model.fit(cls)
         m = model.evaluate(cls)
         rows[cls] = m
+        if scores_out is not None:
+            scores_out[cls] = model.sample_records
         if verbose:
             extra = (f"  align_fitness {m['align_fitness_mean']:.2f}"
                      if "align_fitness_mean" in m else "")
