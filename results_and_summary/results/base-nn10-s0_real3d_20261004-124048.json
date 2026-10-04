@@ -1,0 +1,155 @@
+{
+  "config": {
+    "data_root": "/kaggle/input/datasets/smnihalahmed/real3d-ad-pcd/Real3D-AD-PCD",
+    "dataset": "real3d",
+    "max_nn": 10,
+    "n_scales": 3,
+    "num_group": 2048,
+    "group_size": 128,
+    "smooth_k": 12,
+    "coreset_ratio": 0.1,
+    "cuts": 0,
+    "cuts_diverse": false,
+    "align": "none",
+    "align_voxel": 0.05,
+    "align_poses": 1,
+    "voxel": 0.01,
+    "points_budget": 100000,
+    "topk": 1,
+    "device": "auto",
+    "seed": 0,
+    "extra": {}
+  },
+  "results": {
+    "airplane": {
+      "o_auroc": 0.7644,
+      "o_aupr": 0.8272103300396192,
+      "p_auroc": 0.8564412917159819,
+      "p_aupr": 0.2807453954507004,
+      "p_auroc_pooled": 0.8988430401278639,
+      "p_aupr_pooled": 0.24741592795758557,
+      "n_test": 100,
+      "n_anom": 50
+    },
+    "candybar": {
+      "o_auroc": 0.9716,
+      "o_aupr": 0.9751654353059384,
+      "p_auroc": 0.9856545844829755,
+      "p_aupr": 0.7274611250349825,
+      "p_auroc_pooled": 0.9871009524372715,
+      "p_aupr_pooled": 0.6845528269051824,
+      "n_test": 100,
+      "n_anom": 50
+    },
+    "car": {
+      "o_auroc": 0.7724,
+      "o_aupr": 0.7969623671874848,
+      "p_auroc": 0.8812810481097416,
+      "p_aupr": 0.32308581023086347,
+      "p_auroc_pooled": 0.9151033940887447,
+      "p_aupr_pooled": 0.3053696310378532,
+      "n_test": 100,
+      "n_anom": 50
+    },
+    "chicken": {
+      "o_auroc": 0.6435185185185185,
+      "o_aupr": 0.5837910076982458,
+      "p_auroc": 0.8681962186540957,
+      "p_aupr": 0.25747690819759955,
+      "p_auroc_pooled": 0.855670512632323,
+      "p_aupr_pooled": 0.14030493636526659,
+      "n_test": 106,
+      "n_anom": 54
+    },
+    "diamond": {
+      "o_auroc": 0.9172,
+      "o_aupr": 0.8790033150587229,
+      "p_auroc": 0.9829419050848288,
+      "p_aupr": 0.7591169793235715,
+      "p_auroc_pooled": 0.9838787120869187,
+      "p_aupr_pooled": 0.6533128464206225,
+      "n_test": 100,
+      "n_anom": 50
+    },
+    "duck": {
+      "o_auroc": 0.7332,
+      "o_aupr": 0.6395042998647333,
+      "p_auroc": 0.9654515452874972,
+      "p_aupr": 0.3552038699217844,
+      "p_auroc_pooled": 0.9681117366867733,
+      "p_aupr_pooled": 0.15350116046655432,
+      "n_test": 100,
+      "n_anom": 50
+    },
+    "fish": {
+      "o_auroc": 0.8835999999999999,
+      "o_aupr": 0.9095911487096608,
+      "p_auroc": 0.9308466634823277,
+      "p_aupr": 0.5097473104902694,
+      "p_auroc_pooled": 0.9359842188404378,
+      "p_aupr_pooled": 0.47409718470675744,
+      "n_test": 100,
+      "n_anom": 50
+    },
+    "gemstone": {
+      "o_auroc": 0.6579999999999999,
+      "o_aupr": 0.58750955505608,
+      "p_auroc": 0.9739485763215917,
+      "p_aupr": 0.4846271223953036,
+      "p_auroc_pooled": 0.971403169017046,
+      "p_aupr_pooled": 0.3005645172946897,
+      "n_test": 100,
+      "n_anom": 50
+    },
+    "seahorse": {
+      "o_auroc": 0.5232,
+      "o_aupr": 0.540312814588828,
+      "p_auroc": 0.811296715441218,
+      "p_aupr": 0.1757809320191832,
+      "p_auroc_pooled": 0.8143245319730731,
+      "p_aupr_pooled": 0.08087708571791809,
+      "n_test": 100,
+      "n_anom": 50
+    },
+    "shell": {
+      "o_auroc": 0.5,
+      "o_aupr": 0.5471660013762333,
+      "p_auroc": 0.8466635683998951,
+      "p_aupr": 0.23578931043403584,
+      "p_auroc_pooled": 0.8364141557619383,
+      "p_aupr_pooled": 0.11623403710375607,
+      "n_test": 100,
+      "n_anom": 48
+    },
+    "starfish": {
+      "o_auroc": 0.7188,
+      "o_aupr": 0.7019163657485814,
+      "p_auroc": 0.8318542507498198,
+      "p_aupr": 0.2954268550468537,
+      "p_auroc_pooled": 0.8496688767635701,
+      "p_aupr_pooled": 0.17496593195919208,
+      "n_test": 100,
+      "n_anom": 50
+    },
+    "toffees": {
+      "o_auroc": 0.8435999999999999,
+      "o_aupr": 0.8866569073628336,
+      "p_auroc": 0.9216043465486101,
+      "p_aupr": 0.38219280001301165,
+      "p_auroc_pooled": 0.9330728651745607,
+      "p_aupr_pooled": 0.31105787373342875,
+      "n_test": 100,
+      "n_anom": 50
+    },
+    "__mean__": {
+      "o_auroc": 0.7441265432098766,
+      "o_aupr": 0.7395657956664135,
+      "p_auroc": 0.904681726189882,
+      "p_aupr": 0.39888786821317984,
+      "p_auroc_pooled": 0.9124646804658768,
+      "p_aupr_pooled": 0.3035211633057339,
+      "n_test": 100.5,
+      "n_anom": 50.166666666666664
+    }
+  }
+}

@@ -100,3 +100,20 @@
   selection is a possible contribution (but per-category oracle selection is not legitimate; needs a train-side criterion).
 - Car improved only at small scale (50 -> 66), still far from Simple3D 98.1. Seahorse 53, chicken 65 unchanged.
 - Next (3j): base-nn10 (is there a floor?) and mhr6-nn20 (does registration still add?). Then seeds 1,2 on the winners.
+
+## 3j result (2026-10-04): Real3D-AD, seed 0, single runs
+| config | O-AUROC | P-AUROC | P-AUPR per-cat | P-AUPR pooled |
+|---|---|---|---|---|
+| base-nn20 | 0.725 | 0.903 | 0.390 | 0.292 |
+| base-nn10 | 0.744 | 0.905 | 0.399 | 0.304 |
+| mhr6-nn20 | 0.751 | 0.923 | 0.430 | 0.323 |
+| (mhr6-nn100, 3-seed) | 0.687 | 0.911 | 0.362 | 0.222 |
+- No floor in scale yet (nn10 best base). base-nn10 (74.4, no registration) ~ mhr6-nn20 (75.1): at small scale registration adds only +2.6 O
+  (vs ~+5 at nn100), but +2.0 P-AUROC and +4 P-AUPR: registration's main value is point-level.
+- Registration is category-dependent at nn20: HELPS shell +21.7, chicken +6, gemstone +6, duck +5, starfish +13; HURTS airplane -20.5
+  (82.0 -> 61.5; also 61.9 at nn100: slender-object registration failure), toffees -9, fish -2. Single seed: only large effects trustworthy.
+- mhr6-nn20 P-AUROC 0.923 equals Simple3D's reported 92.3 (convention to be checked).
+- 591 'too few correspondences/fall back' log lines in mhr6-nn20 -> registration robustness remains a lever (airplane).
+- SELECTION BIAS: scale and config were chosen on Real3D-AD test results (6 scales, several configs). Use ShapeNet as an
+  independent check of the scale, and report the selection procedure in the thesis.
+- Next (3k): mhr6-nn10, base-nn6; then seeds 1,2 for the final base and mhr6; ShapeNet 3 seeds at the final scale.
