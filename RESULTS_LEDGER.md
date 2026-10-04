@@ -16,8 +16,8 @@
 | config | seeds | O-AUROC | P-AUROC | P-AUPR | pooled P-AUPR |
 |---|---|---|---|---|---|
 | base | 0,1,2 | 0.6362 +/- 0.0057 (0.637/0.641/0.630) | 0.8779 +/- 0.0022 | 0.2949 +/- 0.0027 | 0.1911 +/- 0.0029 |
-| icp-cuts4 | 0 only (r3) | 0.673 | 0.909 | 0.361 | 0.218 |
-| mhr6 | 0 only (r6) | 0.689 | 0.913 | 0.366 | 0.227 |
+| icp-cuts4 | 0,1,2 | 0.6765 +/- 0.0078 (0.673/0.671/0.685) | 0.9066 +/- 0.0024 | 0.3563 +/- 0.0050 | 0.2174 +/- 0.0022 |
+| mhr6 | 0,1,2 | 0.6873 +/- 0.0114 (0.689/0.675/0.698) | 0.9107 +/- 0.0028 | 0.3620 +/- 0.0049 | 0.2223 +/- 0.0071 |
 
 - base-s0 reproduces the earlier reference (0.6370) EXACTLY -> pipeline is deterministic and the
   cuts_diverse refactor did not change default behaviour.
@@ -25,7 +25,12 @@
   (shell 0.32-0.38, starfish 0.61-0.67, duck 0.72-0.77). Per-category claims need multi-seed support.
 - icp-cuts4 = +3.7 pts and mhr6 = +5.3 pts over base mean (about 6x and 9x the base seed std):
   headline gain very likely real. mhr6 vs icp-cuts4 (+1.6) is only ~2 std -> NEEDS seeds 1,2 (3c).
-- Timing (Kaggle T4x2, 4 vCPU): 2 concurrent base jobs ~2h15 each; the same job ALONE ~1h25.
+- icp-cuts4 vs base, paired per seed: +4.03 pts (per-seed +3.6/+3.0/+5.5, sd 1.3). P-AUROC +2.9, P-AUPR +6.1 (+21% rel).
+  Solid. mhr6 seed 0 (0.6887) is +1.2 over the icp-cuts4 3-seed mean (~1.6 sd): UNRESOLVED until mhr6 seeds 1,2.
+- CAUTION per-category: icp-cuts4 is very unstable on starfish (0.576/0.638/0.726), shell (0.567/0.443/0.563), toffees (0.613/0.706/0.682).
+  The earlier "MHR recovers starfish +11" claim rests on a LOW seed-0 draw (3-seed mean 0.646; MHR gain only +3.9, ~0.5 sd). Do NOT headline it.
+  MHR evidence that survives: duck (+6.3 vs icp-cuts4 mean, ~2.7 sd), candybar (+4.5, ~2.5 sd). Wait for mhr6 seeds.
+- icp-cuts4 job time: ~3h55 each with 2 concurrent (21:41 -> 01:36 local). Timing (Kaggle T4x2, 4 vCPU): 2 concurrent base jobs ~2h15 each; the same job ALONE ~1h25.
   So 2-GPU parallelism only gives ~1.25x over sequential (CPU-bound). Do not expect 2x.
 
 ## Anomaly-ShapeNet (40 cats): O 0.881/0.882, P-AUROC 0.935, P-AUPR 0.673 (2 runs). CSVs not in repo.
@@ -47,3 +52,10 @@
 - scripts/run_parallel.sh : 2-GPU parallel queue (jobs round-robin, or SPLIT=1 by category)
 - scripts/merge_categories.py : merges split runs (verified: re-merging r6 halves reproduces O 0.6887)
 - scripts/aggregate_seeds.py : mean +/- std and paired deltas over seeds
+
+## Simple3D reference facts (from arXiv 2507.07435 text as retrieved 2026-10-04 - VERIFY in the PDF before citing)
+- FPFH multi-scale neighbourhoods 40/80/120, group size 128 (ours: 100/200/300, 128).
+- Real3D-AD per-category O/P-AUROC: car 98.1/99.2, seahorse 93.0/94.2, chicken 82.6/86.1, airplane 76.5/88.1, shell 51.4/71.6.
+- Ours (mhr6, 3-seed means): car 54, seahorse 64, chicken 64, airplane 61, shell 53 (O-AUROC).
+- => the 12-pt gap is concentrated in car (-44), seahorse (-29), chicken (-18), airplane (-15). Shell is hard for everyone.
+- Hypothesis H1: our descriptor scale is too coarse for Real3D-AD (tests: --max-nn 40 / 60). Notebook cell 3g.

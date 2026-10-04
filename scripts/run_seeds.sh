@@ -13,6 +13,11 @@ declare -A CFG=(
   [mhr6]="--align icp --cuts 4 --align-poses 6"
   [mhr6-div]="--align icp --cuts 4 --cuts-diverse --align-poses 6"
   [icp-cuts4-div]="--align icp --cuts 4 --cuts-diverse"
+
+  [base-nn40]="--max-nn 40"
+  [base-nn60]="--max-nn 60"
+  [icp-cuts4-nn40]="--align icp --cuts 4 --max-nn 40"
+  [mhr6-nn40]="--align icp --cuts 4 --align-poses 6 --max-nn 40"
 )
 # CONFIGS env var picks a subset, e.g. CONFIGS="icp-cuts4-div mhr6-div" bash scripts/run_seeds.sh ROOT 0 1 2
 # order matters: cheapest first so a disconnect still leaves usable rows

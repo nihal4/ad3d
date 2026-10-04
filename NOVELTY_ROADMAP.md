@@ -127,3 +127,27 @@ Order of work:
    (1 week). Thesis stands without it: the contribution is the diagnosed,
    ablated registration+cuts+MHR chain plus SOTA-class Anomaly-ShapeNet and
    P-AUROC results.
+
+---
+
+## Decision after 3c (2026-10-04)
+
+3-seed result: icp+cuts is the real effect (+4.0 O, +2.9 P-AUROC, +6.1 P-AUPR). MHR adds a small,
+consistent gain (+1.1 O, not significant at n=3; +0.4/+0.6 point-level, significant). Per-category MHR
+stories from seed 0 do not hold. Frame MHR honestly as a low-cost refinement, not the headline.
+
+Next, in order:
+1. **ShapeNet seeds 1,2** (notebook cell 3f, ~1-2.5 h, unmeasured): the "beats published Simple3D" claim is
+   currently two identical seed-0 runs. Cheap and necessary.
+2. **Diverse-cuts probe: mhr6-div only, seeds 0-2, SPLIT=1** (cell 3d, ~6 h). Adopt only if paired gain over mhr6
+   >= +1.5 pts and positive in 3/3 seeds.
+3. **Registration robustness** (~48% of test clouds fall back to unfiltered correspondences): log fallback rate and
+   fitness per category, then try a more robust initialisation. This is the best remaining lever on object-level AUROC.
+4. Direction B (Point-MAE) stays optional/time-boxed; Simple3D is handcrafted-feature, so representation is not the
+   proven bottleneck.
+
+## PRIORITY 0 (2026-10-04): feature-scale test before anything else
+Simple3D uses FPFH neighbourhoods 40/80/120; we use 100/200/300 and beat the paper on ShapeNet but trail it by ~12 pts
+on Real3D-AD, almost entirely on car/seahorse/chicken/airplane. Run `base-nn40`, `base-nn60` (cell 3g, seed 0, ~2.5 h).
+If base jumps well above 0.637 -> adopt the better scale for the aligned recipe (`mhr6-nn40`, 3 seeds) and re-check ShapeNet.
+If not -> the gap is preprocessing (voxel / points budget / train_cut) - inspect Simple3D's code before registration work.

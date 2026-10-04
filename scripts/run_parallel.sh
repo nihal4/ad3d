@@ -12,7 +12,8 @@
 # MEASURED (Kaggle T4x2, 4 vCPU, base config): 2 concurrent jobs ~2h15 each vs ~1h25 alone,
 # i.e. only ~1.25x faster than sequential - the CPU, not the GPU, is the bottleneck.
 #
-# Env: NGPU (default: detected, else 2)  CONFIGS  SPLIT=1
+# Env: NGPU (default: detected, else 2)  CONFIGS  SPLIT=1  DATASET=real3d|shapenet (default real3d;
+#      shapenet supports MODE 1 only). e.g. DATASET=shapenet CONFIGS="base" bash scripts/run_parallel.sh <SHAPENET_ROOT> 1 2
 set -uo pipefail
 ROOT="$1"; shift
 SEEDS="${@:-0 1 2}"
@@ -27,8 +28,15 @@ declare -A CFG=(
   [mhr6]="--align icp --cuts 4 --align-poses 6"
   [icp-cuts4-div]="--align icp --cuts 4 --cuts-diverse"
   [mhr6-div]="--align icp --cuts 4 --cuts-diverse --align-poses 6"
+
+  [base-nn40]="--max-nn 40"
+  [base-nn60]="--max-nn 60"
+  [icp-cuts4-nn40]="--align icp --cuts 4 --max-nn 40"
+  [mhr6-nn40]="--align icp --cuts 4 --align-poses 6 --max-nn 40"
 )
 CONFIGS="${CONFIGS:-base icp-cuts4 mhr6}"
+DATASET="${DATASET:-real3d}"
+if [ "$DATASET" != "real3d" ] && [ "${SPLIT:-0}" = "1" ]; then echo "SPLIT=1 supports real3d only"; exit 1; fi
 mkdir -p logs results/parts
 echo "[parallel] gpus=$NGPU cpus=$NCPU threads/proc=$THREADS  configs: $CONFIGS  seeds: $SEEDS"
 
@@ -39,7 +47,7 @@ if [ "${SPLIT:-0}" = "1" ]; then
     pids=()
     for g in $(seq 0 $((NGPU-1))); do
       list=""; for i in "${!CATS[@]}"; do [ $((i % NGPU)) -eq "$g" ] && list="${list:+$list,}${CATS[$i]}"; done
-      CUDA_VISIBLE_DEVICES=$g OMP_NUM_THREADS=$THREADS python run.py --dataset real3d \
+      CUDA_VISIBLE_DEVICES=$g OMP_NUM_THREADS=$THREADS python run.py --dataset "$DATASET" \
         --data-root "$ROOT" ${CFG[$name]} --seed "$s" --classes "$list" \
         --out results/parts --tag "${name}-s${s}-part${g}" > "logs/${name}-s${s}-part${g}.log" 2>&1 &
       pids+=($!)
@@ -58,7 +66,7 @@ for g in $(seq 0 $((NGPU-1))); do
       [ $((i % NGPU)) -eq "$g" ] || continue
       name="${jobs[$i]%%:*}"; s="${jobs[$i]##*:}"
       echo "[gpu$g] start $name seed $s"
-      CUDA_VISIBLE_DEVICES=$g OMP_NUM_THREADS=$THREADS python run.py --dataset real3d \
+      CUDA_VISIBLE_DEVICES=$g OMP_NUM_THREADS=$THREADS python run.py --dataset "$DATASET" \
         --data-root "$ROOT" ${CFG[$name]} --seed "$s" --tag "${name}-s${s}" \
         > "logs/${name}-s${s}.log" 2>&1 && echo "[gpu$g] done  $name seed $s" || echo "[gpu$g] FAILED $name seed $s (see logs/)"
     done

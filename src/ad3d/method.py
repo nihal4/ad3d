@@ -33,7 +33,8 @@ class Config:
     data_root: str = "data"
     dataset: str = "shapenet"          # 'shapenet' | 'real3d'
     # features
-    max_nn: int = 100                  # FPFH base neighborhood (Simple3D default)
+    max_nn: int = 100                  # FPFH base neighborhood. NOTE: Simple3D paper (arXiv 2507.07435) states 40/80/120
+                                       # (i.e. max_nn=40, n_scales=3); 100 is NOT the paper default - test --max-nn 40
     n_scales: int = 3                  # MSND scales: max_nn * [1, 2, 3]
     # grouping
     num_group: int = 2048              # FPS centers

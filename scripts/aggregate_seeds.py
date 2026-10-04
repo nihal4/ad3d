@@ -11,11 +11,12 @@ ap = argparse.ArgumentParser()
 ap.add_argument("results_dir")
 ap.add_argument("--ref", default="base", help="config used as the paired reference")
 ap.add_argument("--metric", default="o_auroc")
+ap.add_argument("--dataset", default="real3d", help="real3d | shapenet")
 a = ap.parse_args()
 
 runs = {}  # config -> {seed: DataFrame}
-for f in sorted(glob.glob(os.path.join(a.results_dir, "*_real3d_*.csv"))):
-    m = re.match(r"(.+)-s(\d+)_real3d_", os.path.basename(f))
+for f in sorted(glob.glob(os.path.join(a.results_dir, f"*_{a.dataset}_*.csv"))):
+    m = re.match(rf"(.+)-s(\d+)_{a.dataset}_", os.path.basename(f))
     if not m:
         continue
     df = pd.read_csv(f, index_col=0)
