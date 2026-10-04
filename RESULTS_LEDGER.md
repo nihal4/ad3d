@@ -59,3 +59,28 @@
 - Ours (mhr6, 3-seed means): car 54, seahorse 64, chicken 64, airplane 61, shell 53 (O-AUROC).
 - => the 12-pt gap is concentrated in car (-44), seahorse (-29), chicken (-18), airplane (-15). Shell is hard for everyone.
 - Hypothesis H1: our descriptor scale is too coarse for Real3D-AD (tests: --max-nn 40 / 60). Notebook cell 3g.
+
+## Literature review (2026-10-04) - paper/related_work.tex + paper/references.bib
+- 14 peer-reviewed papers, venue/year/pages checked on publisher or proceedings pages.
+  EXCLUDED (no peer-reviewed venue found, do not cite as peer-reviewed): PointCore (arXiv 2403.01804),
+  3DKeyAD (arXiv 2507.13110), CPMF (arXiv 2303.13194). Check dblp/ECVA before adding any of them.
+- CORRECTIONS to earlier comparison tables: PO3AD is CVPR 2025 (not ECCV 2024).
+  "PatchCore-FPFH 68.2" is PatchCore (FPFH+Raw) in Real3D-AD Table 4; plain PatchCore (FPFH) is 59.3.
+  Reg3D-AD point-level AUROC in Real3D-AD paper is 0.700 (roadmap table says 70.5) - recheck.
+- Verified numbers: Reg3D-AD 70.4 O; R3D-AD 73.4/74.9 O; Template3D-AD 84.4/86.5 O; PASDF 80.2/90.0 O.
+  Simple3D 80.4 and Reg2Inv ~83.9 NOT re-verified against PDFs (only abstracts read).
+- Open TODOs in related_work.tex: confirm "single-run reporting" claim (G3) in each paper; fill 3g
+  feature-scale result; 3-seed ShapeNet before claiming it beats Simple3D.
+
+## 3g result (2026-10-04): FEATURE SCALE MATTERS (Real3D-AD, base, seed 0, single run each)
+| max-nn | O-AUROC | P-AUROC | P-AUPR (per-cat) | P-AUPR pooled |
+|---|---|---|---|---|
+| 100 (base-s0) | 0.6370 | 0.8757 | 0.294 | - |
+| 60  | 0.6581 | 0.8900 | 0.330 | 0.231 |
+| 40  | 0.6988 | 0.8975 | 0.363 | 0.268 |
+- Monotone in scale. nn40 alone (+6.2 O, no registration) already beats the 3-seed mhr6 (0.687); base seed sd is 0.6, so real.
+- Biggest nn40 gains vs nn100: fish +17.5, candybar +15.6, airplane +14.4, gemstone +12, toffees +10, starfish +12.
+- NOT fixed by scale: car 50 (Simple3D 98.1), seahorse 58 (93.0), shell 32 (51.4), chicken 66 (82.6). Car/seahorse are
+  likely preprocessing/normalisation/partial-view effects, not descriptor scale. Shell got worse (38 -> 32).
+- Open: optimum may be below 40 (3i: nn30, nn20); does registration still add at nn40? (3j). Single seed: confirm with seeds 1,2 at the chosen scale.
+- Impact on thesis claim: the registration chain's gain was measured at a mis-scaled descriptor; must be re-measured at the new scale.

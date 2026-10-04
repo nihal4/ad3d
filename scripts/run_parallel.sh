@@ -31,6 +31,8 @@ declare -A CFG=(
 
   [base-nn40]="--max-nn 40"
   [base-nn60]="--max-nn 60"
+  [base-nn30]="--max-nn 30"
+  [base-nn20]="--max-nn 20"
   [icp-cuts4-nn40]="--align icp --cuts 4 --max-nn 40"
   [mhr6-nn40]="--align icp --cuts 4 --align-poses 6 --max-nn 40"
 )
