@@ -1,0 +1,35 @@
+[ad3d] dataset=real3d  device=cuda (Tesla T4)  classes=12
+[ad3d] config: Config(data_root='/kaggle/input/datasets/smnihalahmed/real3d-ad-pcd/Real3D-AD-PCD', dataset='real3d', max_nn=10, n_scales=3, num_group=2048, group_size=128, smooth_k=12, coreset_ratio=0.1, cuts=0, cuts_diverse=False, align='none', align_voxel=0.05, align_poses=1, voxel=0.01, points_budget=100000, topk=1, train_cut_root='/kaggle/working/real3d_cut/Real3D-mvtec', train_cut_with_protos=False, device='auto', seed=0, extra={})
+  [train-cut] airplane: 4 cut clouds
+[real3d]       airplane  O-AUROC 0.665  P-AUROC 0.881  P-AUPR 0.327  (50/100 anomalous)
+  [train-cut] candybar: 8 cut clouds
+[real3d]       candybar  O-AUROC 0.802  P-AUROC 0.939  P-AUPR 0.421  (50/100 anomalous)
+  [train-cut] car: 8 cut clouds
+[real3d]            car  O-AUROC 0.487  P-AUROC 0.859  P-AUPR 0.185  (50/100 anomalous)
+  [train-cut] chicken: 8 cut clouds
+[real3d]        chicken  O-AUROC 0.698  P-AUROC 0.871  P-AUPR 0.264  (54/106 anomalous)
+  [train-cut] diamond: 8 cut clouds
+[real3d]        diamond  O-AUROC 0.925  P-AUROC 0.982  P-AUPR 0.778  (50/100 anomalous)
+  [train-cut] duck: 9 cut clouds
+[real3d]           duck  O-AUROC 0.587  P-AUROC 0.971  P-AUPR 0.370  (50/100 anomalous)
+  [train-cut] fish: 8 cut clouds
+[real3d]           fish  O-AUROC 0.676  P-AUROC 0.876  P-AUPR 0.270  (50/100 anomalous)
+  [train-cut] gemstone: 8 cut clouds
+[real3d]       gemstone  O-AUROC 0.687  P-AUROC 0.964  P-AUPR 0.473  (50/100 anomalous)
+  [train-cut] seahorse: 8 cut clouds
+[real3d]       seahorse  O-AUROC 0.472  P-AUROC 0.756  P-AUPR 0.127  (50/100 anomalous)
+  [train-cut] shell: 4 cut clouds
+[real3d]          shell  O-AUROC 0.545  P-AUROC 0.780  P-AUPR 0.123  (48/100 anomalous)
+  [train-cut] starfish: 8 cut clouds
+[real3d]       starfish  O-AUROC 0.716  P-AUROC 0.872  P-AUPR 0.352  (50/100 anomalous)
+  [train-cut] toffees: 8 cut clouds
+[real3d]        toffees  O-AUROC 0.768  P-AUROC 0.932  P-AUPR 0.394  (50/100 anomalous)
+
+=== Mean over 12 categories ===
+         o_auroc: 0.6691
+         p_auroc: 0.8903
+          p_aupr: 0.3403
+  p_auroc_pooled: 0.8974
+   p_aupr_pooled: 0.2106
+
+[ad3d] saved: results/cut-nn10-s0_real3d_20261004-161052.csv / .json / _scores.json

@@ -42,13 +42,14 @@ declare -A CFG=(
   [cut-nn10]="--max-nn 10 --train-cut-root ${CUT_ROOT}"
   [cut-icp-nn10]="--align icp --max-nn 10 --train-cut-root ${CUT_ROOT}"
   [cut-mhr6-nn10]="--align icp --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT}"
+  [mhr6-nn10-pluscut]="--align icp --cuts 4 --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT} --train-cut-with-protos"
   [cut-mhr6-nn10-protos]="--align icp --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT} --train-cut-with-protos"
   [icp-cuts4-nn20]="--align icp --cuts 4 --max-nn 20"
   [mhr6-nn20]="--align icp --cuts 4 --align-poses 6 --max-nn 20"
   [icp-cuts4-nn40]="--align icp --cuts 4 --max-nn 40"
   [mhr6-nn40]="--align icp --cuts 4 --align-poses 6 --max-nn 40"
 )
-for _c in ${CONFIGS:-}; do case "$_c" in cut-*) [ -z "$CUT_ROOT" ] && { echo "[!] config $_c needs CUT_ROOT=<folder with <cls>/train_cut>"; exit 1; };; esac; done
+for _c in ${CONFIGS:-}; do case "$_c" in cut-*|*-pluscut) [ -z "$CUT_ROOT" ] && { echo "[!] config $_c needs CUT_ROOT=<folder with <cls>/train_cut>"; exit 1; };; esac; done
 CONFIGS="${CONFIGS:-base icp-cuts4 mhr6}"
 DATASET="${DATASET:-real3d}"
 if [ "$DATASET" != "real3d" ] && [ "${SPLIT:-0}" = "1" ]; then echo "SPLIT=1 supports real3d only"; exit 1; fi

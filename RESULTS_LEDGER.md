@@ -169,3 +169,25 @@ Then: freeze config -> seeds 1,2 -> ShapeNet 3 seeds.
   in MVTec-3D format (xyz/*.tiff + rgb/gt png). TRAIN: 8 cuts per category (airplane, shell: 4; duck: 9).
   Its TEST split is smaller (~49 per category: e.g. airplane good 24 / bulge 20 / sink 5) than the official 100 -> NOT used;
   we always test on the official Real3D-AD test set. Loader: datasets.find_train_cut_paths supports train/good/xyz/*.tiff.
+
+## STEP 4 result (2026-10-04 22:40): GLFM/Simple3D cut training data, seed 0 (official test set)
+| config | O max | O mean | O p99 | O top200 | P-AUROC | P-AUROC pooled | P-AUPR |
+|---|---|---|---|---|---|---|---|
+| cut-nn10 (cuts only, no reg.) | 66.9 | 71.6 | 69.4 | 68.2 | 89.0 | 89.7 | 0.340 |
+| cut-mhr6-nn10 (cuts registered + MHR) | 74.2 | 72.4 | 77.3 | 76.2 | 91.7 | 92.1 | 0.437 |
+| ref: base-nn10 (360 protos) | 74.4 | - | - | - | 90.5 | - | 0.399 |
+| ref: mhr6-nn10 (360 protos + sim. cuts) | 78.3 | - | - | - | 92.3 | 93.0 | 0.431 |
+- HYPOTHESIS REJECTED: the curated single-view cut data does NOT explain Simple3D's edge; our 360-degree prototypes
+  + simulated cuts + registration beat it by 4-7.5 pts (O, max rule). Thesis point: protocol tested, not the cause.
+- Even with Simple3D's data AND its mean rule we get 71.6, far from its 80.4 -> remaining suspects: resolution
+  (their absolute voxel 0.15, no point cap; we cap 100k at relative voxel 0.01), 4096 groups, 5% coreset, max_nn 40.
+- OBJECT-SCORE RULE is a large lever: p99 beats max by +2.5 / +3.1 on both runs; per-category effects are huge
+  (cut-mhr6: seahorse 64.2 max -> 83.4 p95; chicken 65.5 max -> 84.0 mean). Must be re-checked on mhr6-nn10 (5a re-run
+  saves scores). Rule choice = test-selected; pre-commit to ONE global rule and validate on Anomaly-ShapeNet.
+- Next: 5a = mhr6-nn10 (re-run for scores) + mhr6-nn10-pluscut (360 protos + sim. cuts + real cuts).
+- results_4.zip saved (results_and_summary/results/cut-*, incl. _scores.json). Cut registration fitness in cut-mhr6-nn10:
+  airplane/candybar/diamond/fish/toffees 1.00, duck 0.98, starfish 0.97, shell 0.91, car 0.86, chicken 0.82,
+  gemstone 0.75, seahorse 0.73 -> poorly registered training cuts pollute the memory in exactly the categories where
+  cut-mhr6 trails mhr6-nn10 (car 58.4 vs 80.7, chicken 65.5 vs 70.4, seahorse 64.2 vs 55.1 is the exception).
+  If pluscut (5a) helps, gate real cuts by registration fitness (e.g. keep only fit >= 0.9).
+- Notebook convention adopted (2026-10-04): only current-step cells active; scripts/nb_activate.py. Current: STEP 5.

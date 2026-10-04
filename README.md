@@ -113,3 +113,9 @@ class MyMethod(Simple3DLite):
         ...  # your features here
         return centers, center_feats
 ```
+
+## Notebook convention (Kaggle)
+`kaggle_ad3d.ipynb` always has **only the cells of the current step active**; every other code cell is commented out,
+so a session is simply **Run All**. The banner cell at the top names the current step and lists the active cells.
+Cell 2 clones the repo once and `git pull`s it afterwards, so a pushed update is picked up automatically.
+To switch steps: `python scripts/nb_activate.py kaggle_ad3d.ipynb "<STEP label>" "<cell prefix>" ...`

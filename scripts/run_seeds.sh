@@ -27,6 +27,7 @@ declare -A CFG=(
   [cut-nn10]="--max-nn 10 --train-cut-root ${CUT_ROOT}"
   [cut-icp-nn10]="--align icp --max-nn 10 --train-cut-root ${CUT_ROOT}"
   [cut-mhr6-nn10]="--align icp --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT}"
+  [mhr6-nn10-pluscut]="--align icp --cuts 4 --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT} --train-cut-with-protos"
   [cut-mhr6-nn10-protos]="--align icp --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT} --train-cut-with-protos"
   [icp-cuts4-nn20]="--align icp --cuts 4 --max-nn 20"
   [mhr6-nn20]="--align icp --cuts 4 --align-poses 6 --max-nn 20"
