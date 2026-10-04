@@ -84,3 +84,19 @@
   likely preprocessing/normalisation/partial-view effects, not descriptor scale. Shell got worse (38 -> 32).
 - Open: optimum may be below 40 (3i: nn30, nn20); does registration still add at nn40? (3j). Single seed: confirm with seeds 1,2 at the chosen scale.
 - Impact on thesis claim: the registration chain's gain was measured at a mis-scaled descriptor; must be re-measured at the new scale.
+
+## 3i result (2026-10-04): scale sweep continues to help (Real3D-AD, base, seed 0, single runs)
+| max-nn (x[1,2,3]) | O-AUROC | P-AUROC | P-AUPR per-cat | P-AUPR pooled |
+|---|---|---|---|---|
+| 100 | 0.637 | 0.876 | 0.294 | 0.192 |
+| 60  | 0.658 | 0.890 | 0.330 | 0.231 |
+| 40  | 0.699 | 0.898 | 0.363 | 0.268 |
+| 30  | 0.713 | 0.902 | 0.378 | 0.283 |
+| 20  | 0.725 | 0.903 | 0.390 | 0.292 |
+- Radius is 1e6, so max_nn = neighbourhood size; Simple3D's 40/80/120 is already beaten by 20/40/60 here.
+- Not saturated in O-AUROC/AUPR; P-AUROC flattening. The 30->20 gain (+1.2 O) is ~2 base-seed sd: suggestive, not firm.
+- Category optima differ: airplane, candybar, car, fish, toffees, shell keep improving; diamond (99.0->95.4),
+  gemstone, starfish (73.6@60 -> 59.8@20), seahorse peak at larger scale. Mean hides this -> per-category or multi-scale-set
+  selection is a possible contribution (but per-category oracle selection is not legitimate; needs a train-side criterion).
+- Car improved only at small scale (50 -> 66), still far from Simple3D 98.1. Seahorse 53, chicken 65 unchanged.
+- Next (3j): base-nn10 (is there a floor?) and mhr6-nn20 (does registration still add?). Then seeds 1,2 on the winners.
