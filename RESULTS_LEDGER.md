@@ -212,3 +212,27 @@ Then: freeze config -> seeds 1,2 -> ShapeNet 3 seeds.
 - STEP 6 (running): seeds 1,2 for the two registered configs + base-nn10-p99 seeds 0,1,2.
 - Protocol note for the thesis: the final config uses the GLFM-released cut views of the SAME four training prototypes
   (no extra objects); report results with and without them (mhr6-nn10-p99 is the no-external-cuts row).
+
+## PRE-REGISTRATION (2026-10-06 19:50, written BEFORE any step-7 result exists): multi-scale fusion
+Hypothesis: categories prefer different descriptor scales (base sweep: diamond nn100 +7.3, gemstone nn40 +10, seahorse nn40 +5.8;
+with registration diamond/gemstone/seahorse still prefer larger scales by 5-7.5). Fusing scales recovers part of this.
+- Runs: final config `pluscut-p99` at max_nn 10 / 40 / 100, seed 0 (step 7, notebook cells 7a-7c).
+- PRIMARY rule (fixed now): for each category and scale, object score = p99 of the point-score map, z-normalised with the
+  TRAINING reference of that scale (mean/std of the training features' distances to the coreset, saved as train_ref_*);
+  fused score = equal-weight mean over the three scales {10, 40, 100}. No test labels, no per-category weights/choices.
+- Secondary (reported, not used to decide): ratio normalisation, raw scores, and all 2-scale subsets.
+- Decision gate: adopt fusion only if PRIMARY fused O-AUROC >= nn10 run of the same step + 1.5 (beyond the ~0.4 run noise).
+  If adopted: implement fusion inside the pipeline (point-level too), then step 6 seeds on the fused config.
+- Disclosure for the thesis: the scale set {10,40,100} was informed by the Real3D-AD test-set sweep (selection bias).
+- Code: MemoryBank.ref (training distances to coreset), method.evaluate -> train_ref_* metrics, scripts/fuse_scales.py.
+- 2026-10-06 20:06: STEP 7 (multi-scale fusion) CANCELLED by decision (cost ~4 GPU-h vs. an uncertain ~+1.5 gain).
+  The pre-registration above stays on record; it was never run. Code (MemoryBank.ref, fuse_scales.py, nn40/nn100 configs)
+  kept for possible future work. Next: STEP 6 seeds on the frozen final config.
+
+## STEP 8 (planned 2026-10-06 20:12): one-at-a-time boost screens on the 5 weakest categories
+- Policy (user decision): beat the benchmark first, seeds after; test ONE change at a time; screen on the 5 weakest
+  categories (airplane, car, chicken, duck, shell) to save GPU time; a winner is applied to ALL categories (no per-category
+  choice) and validated on all 12 before adoption.
+- 8 = Simple3D grouping: final config + --num-group 4096 --coreset 0.05. Reference (pluscut-p99, s0) 5-cat O mean 70.78.
+  Gate fixed in advance: 5-cat mean >= 72.8 (+2.0). Next in line if it fails: higher resolution.
+- Code: run_parallel.sh SPLIT mode accepts CLASSES=<subset> (merge with --allow-partial).

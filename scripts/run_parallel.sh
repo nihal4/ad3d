@@ -12,7 +12,7 @@
 # MEASURED (Kaggle T4x2, 4 vCPU, base config): 2 concurrent jobs ~2h15 each vs ~1h25 alone,
 # i.e. only ~1.25x faster than sequential - the CPU, not the GPU, is the bottleneck.
 #
-# Env: NGPU (default: detected, else 2)  CONFIGS  SPLIT=1  DATASET=real3d|shapenet (default real3d;
+# Env: NGPU (default: detected, else 2)  CONFIGS  SPLIT=1  CLASSES=a,b,c (SPLIT mode: only these categories)  DATASET=real3d|shapenet (default real3d;
 #      shapenet supports MODE 1 only). e.g. DATASET=shapenet CONFIGS="base" bash scripts/run_parallel.sh <SHAPENET_ROOT> 1 2
 set -uo pipefail
 ROOT="$1"; shift
@@ -46,6 +46,9 @@ declare -A CFG=(
   [base-nn10-p99]="--max-nn 10 --obj-rule p99"
   [mhr6-nn10-p99]="--align icp --cuts 4 --align-poses 6 --max-nn 10 --obj-rule p99"
   [mhr6-nn10-pluscut-p99]="--align icp --cuts 4 --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT} --train-cut-with-protos --obj-rule p99"
+  [mhr6-nn40-pluscut-p99]="--align icp --cuts 4 --align-poses 6 --max-nn 40 --train-cut-root ${CUT_ROOT} --train-cut-with-protos --obj-rule p99"
+  [mhr6-nn100-pluscut-p99]="--align icp --cuts 4 --align-poses 6 --max-nn 100 --train-cut-root ${CUT_ROOT} --train-cut-with-protos --obj-rule p99"
+  [mhr6-nn10-pluscut-p99-g4096]="--align icp --cuts 4 --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT} --train-cut-with-protos --obj-rule p99 --num-group 4096 --coreset 0.05"
   [cut-mhr6-nn10-protos]="--align icp --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT} --train-cut-with-protos"
   [icp-cuts4-nn20]="--align icp --cuts 4 --max-nn 20"
   [mhr6-nn20]="--align icp --cuts 4 --align-poses 6 --max-nn 20"
@@ -62,6 +65,8 @@ echo "[parallel] gpus=$NGPU cpus=$NCPU threads/proc=$THREADS  configs: $CONFIGS 
 if [ "${SPLIT:-0}" = "1" ]; then
   # interleave categories so heavy ones are spread across GPUs
   CATS=(airplane candybar car chicken diamond duck fish gemstone seahorse shell starfish toffees)
+  PARTIAL=""
+  if [ -n "${CLASSES:-}" ]; then IFS=',' read -r -a CATS <<< "$CLASSES"; PARTIAL="--allow-partial"; fi   # category subset (screening)
   for name in $CONFIGS; do for s in $SEEDS; do
     pids=()
     for g in $(seq 0 $((NGPU-1))); do
@@ -72,7 +77,7 @@ if [ "${SPLIT:-0}" = "1" ]; then
       pids+=($!)
     done
     for p in "${pids[@]}"; do wait "$p"; done
-    python scripts/merge_categories.py "${name}-s${s}" results/parts/${name}-s${s}-part*_real3d_*.csv
+    python scripts/merge_categories.py $PARTIAL "${name}-s${s}" results/parts/${name}-s${s}-part*_real3d_*[0-9].csv
   done; done
   exit 0
 fi

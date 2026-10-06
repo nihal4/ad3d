@@ -17,6 +17,7 @@ class MemoryBank:
         self.device = _resolve_device(device)
         self.feats: torch.Tensor | None = None      # coreset (m, F)
         self._raw: list[torch.Tensor] = []
+        self.ref: dict = {}                           # training-normal distance stats (for score normalisation)
 
     # ------------------------------------------------------------------ #
     def add(self, feats: np.ndarray) -> None:
@@ -31,6 +32,7 @@ class MemoryBank:
         m = max(1, int(n * coreset_ratio))
         if m >= n:
             self.feats = all_feats
+            self.ref = {}
             return
         rng = np.random.default_rng(seed)
         selected = torch.tensor([rng.integers(n)], dtype=torch.long, device=self.device)
@@ -42,6 +44,15 @@ class MemoryBank:
             d = torch.cdist(all_feats[far:far + 1], all_feats).squeeze(0)
             min_dist = torch.minimum(min_dist, d)
         self.feats = all_feats[selected]
+        # min_dist = distance of every TRAINING feature to the final coreset (0 for the selected ones):
+        # a training-only reference of how far normal features sit from the bank. Used to put scores
+        # from different descriptor scales on a common footing (no test data involved).
+        nz = min_dist[min_dist > 0].float()
+        if nz.numel() > 10:
+            q = torch.quantile(nz[torch.randperm(nz.numel(), device=nz.device)[:200000]],
+                               torch.tensor([0.5, 0.9, 0.99], device=nz.device))
+            self.ref = {"mean": float(nz.mean()), "std": float(nz.std()),
+                        "p50": float(q[0]), "p90": float(q[1]), "p99": float(q[2])}
 
     # ------------------------------------------------------------------ #
     def min_dists(self, query: np.ndarray, work_size: int = 2 ** 24) -> np.ndarray:

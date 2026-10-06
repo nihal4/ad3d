@@ -341,6 +341,8 @@ class Simple3DLite:
         if self.cfg.align_poses > 1 and test:
             m["pose_switch_rate"] = pose_switched / len(test)
         m.update(getattr(self, "train_cut_info", {}) or {})
+        for k, v in (self.memory.ref or {}).items():
+            m[f"train_ref_{k}"] = v
         return m
 
 
