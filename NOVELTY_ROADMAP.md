@@ -166,3 +166,9 @@ Differs from Template3D-AD (single template, one global scale, no variation mode
 (raw xyz features). 2D analogue: PaDiM's per-position statistics - possible in 3D only after registration, which our
 pipeline already does (with multi-hypothesis pose selection). Novelty claim needs a targeted literature check before writing.
 Ablation built into every --geo run: features | geo-uniform | geo-PTF | fused-uniform | fused-PTF.
+
+## NEW MECHANISM 2 (2026-10-07): location-aware memory
+"Does this shape occur HERE on a normal object?" instead of "ANYWHERE". Memory descriptors carry registered 3D positions;
+test descriptors search only a radius rho around their own position, over ALL training clouds (4 prototypes + simulated
+cuts + registered real cuts) with multi-hypothesis registration. Template3D-AD compares with ONE template at the nearest
+centre; global memory banks (PatchCore, Simple3D, Reg2Inv) ignore position. Step 11 tests it (pre-registered).

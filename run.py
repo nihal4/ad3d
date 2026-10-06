@@ -63,6 +63,10 @@ def parse_args() -> argparse.Namespace:
                    help="object score: 1 = max point score, k>1 = mean of top-k, 0 = mean of ALL points (Simple3D on Real3D-AD)")
     p.add_argument("--obj-rule", default="",
                    help="object-score rule, overrides --topk: max | mean | p99 | p95 | top200 | top1pct ...")
+    p.add_argument("--local-mem", type=float, default=0.0,
+                   help="location-aware memory: primary radius rho (needs --align icp), e.g. 0.10; 0 = off")
+    p.add_argument("--local-radii", default="0.05,0.10,0.15",
+                   help="radii reported from the same run (sensitivity), comma separated")
     p.add_argument("--geo", default="none", choices=["none", "fuse", "only"],
                    help="Prototype Tolerance Field geometric channel (needs --align icp): fuse = feature x (1+u)")
     p.add_argument("--geo-voxel", type=float, default=0.005)
@@ -97,6 +101,7 @@ def main():
         topk=args.topk,
         obj_rule=args.obj_rule,
         geo=args.geo, geo_voxel=args.geo_voxel, geo_k=args.geo_k,
+        local_mem=args.local_mem, local_radii=tuple(float(x) for x in args.local_radii.split(",") if x),
         train_cut_root=args.train_cut_root,
         train_cut_with_protos=args.train_cut_with_protos,
         device=args.device,

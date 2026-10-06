@@ -65,6 +65,9 @@ class Config:
     geo: str = "none"                  # 'none' | 'fuse' (feature x (1 + u)) | 'only' (u alone, ablation)
     geo_voxel: float = 0.005           # surface sampling of the merged prototypes (unit-normalised frame)
     geo_k: int = 12                    # test-point smoothing of the normalised residual
+    # location-aware memory (needs align='icp'); see localmem.py. 0 = off (global memory only)
+    local_mem: float = 0.0             # PRIMARY radius rho (unit-normalised frame); e.g. 0.10
+    local_radii: tuple = (0.05, 0.10, 0.15)   # also reported from the same run (sensitivity)
     # misc
     device: str = "auto"
     seed: int = 0
@@ -146,8 +149,10 @@ class Simple3DLite:
         return centers, center_feats
 
     def _add_to_memory(self, pts: np.ndarray) -> None:
-        _, center_feats = self.sample_features(pts)
+        centers, center_feats = self.sample_features(pts)
         self.memory.add(center_feats)
+        if getattr(self, "_local", None) is not None:
+            self._local.add(centers, center_feats)
 
     def _simulated_cuts(self, pts: np.ndarray, n_cuts: int, proto_idx: int = 0) -> int:
         """Augment the memory with simulated single-view scans of a prototype.
@@ -228,6 +233,12 @@ class Simple3DLite:
     # ------------------------------------------------------------------ #
     def fit(self, cls: str):
         self.memory = MemoryBank(device=self.cfg.device)
+        self._local = None
+        if self.cfg.local_mem > 0:
+            if self.cfg.align != "icp":
+                raise ValueError("--local-mem needs --align icp (positions must live in one registered frame)")
+            from .localmem import LocalMemory
+            self._local = LocalMemory(device=self.cfg.device)
         trains = D.load_train(self.cfg.data_root, self.cfg.dataset, cls)
 
         if self.cfg.align == "icp":
@@ -300,6 +311,9 @@ class Simple3DLite:
                   + (f", registration fitness {np.mean(cut_fits):.2f}" if cut_fits else ""), flush=True)
 
         self.memory.build(coreset_ratio=self.cfg.coreset_ratio, seed=self.cfg.seed)
+        if self._local is not None:
+            self._local.build()
+            print(f"  [local-mem] {cls}: {self._local.size} positioned descriptors", flush=True)
 
     def evaluate(self, cls: str) -> dict:
         test = D.load_test(self.cfg.data_root, self.cfg.dataset, cls)
@@ -308,6 +322,13 @@ class Simple3DLite:
 
         obj_labels, obj_scores, point_gts, point_scores_all = [], [], [], []
         tol = getattr(self, "_tol", None)
+        lm = getattr(self, "_local", None)
+        if lm is not None and self.cfg.local_mem not in tuple(self.cfg.local_radii):
+            self.cfg.local_radii = tuple(sorted(set(tuple(self.cfg.local_radii) + (self.cfg.local_mem,))))
+        LCH = (["glob"] + [f"loc{int(round(r * 100)):02d}" for r in self.cfg.local_radii]) if lm is not None else []
+        lch_obj = {k: [] for k in LCH}
+        lch_pts = {k: [] for k in LCH}
+        loc_cand = {r: [] for r in self.cfg.local_radii}
         CH = ("feat", "geo", "geou", "fuseu")        # ablation channels computed in the SAME run
         ch_obj = {k: [] for k in CH}                 # per-channel object scores (same object rule)
         ch_pts = {k: [] for k in CH}
@@ -337,6 +358,14 @@ class Simple3DLite:
             p_scores = point_scores(pts, centers, center_dists,
                                     smooth_k=self.cfg.smooth_k,
                                     device=self.cfg.device)
+            loc_maps = {}
+            if self._local is not None:
+                ld, lc = self._local.dists(centers, center_feats, tuple(self.cfg.local_radii), fallback=center_dists)
+                for r_, dr in ld.items():
+                    loc_maps[r_] = point_scores(pts, centers, dr, smooth_k=self.cfg.smooth_k, device=self.cfg.device)
+                    loc_cand[r_].append(lc[r_])
+                glob_map = p_scores
+                p_scores = loc_maps[self.cfg.local_mem]          # PRIMARY: location-aware score
             def _obj(v):
                 return (object_score_rule(v, self.cfg.obj_rule) if self.cfg.obj_rule
                         else object_score(v, topk=self.cfg.topk))
@@ -351,6 +380,14 @@ class Simple3DLite:
                 for k_, v_ in ch.items():
                     ch_obj[k_].append(_obj(v_))
                     ch_pts[k_].append(v_)
+            if lm is not None:
+                chs = {"glob": glob_map}
+                chs.update({f"loc{int(round(r_ * 100)):02d}": v_ for r_, v_ in loc_maps.items()})
+                for k_, v_ in chs.items():
+                    lch_obj[k_].append(_obj(v_))
+                    lch_pts[k_].append(v_)
+                    st = object_score_stats(v_)
+                    ch[k_] = v_
             obj_labels.append(s.label)
             obj_scores.append(_obj(p_scores))
             rec = {"file": os.path.basename(s.path), "label": int(s.label),
@@ -366,6 +403,14 @@ class Simple3DLite:
             point_scores_all.append(p_scores)
 
         m = compute_metrics(obj_labels, obj_scores, point_gts, point_scores_all)
+        if lm is not None:                           # global vs location-aware channels from the SAME run
+            for k_ in LCH:
+                mc = compute_metrics(obj_labels, lch_obj[k_], point_gts, lch_pts[k_])
+                for key in ("o_auroc", "p_auroc", "p_aupr", "p_auroc_pooled", "p_aupr_pooled"):
+                    m[f"{k_}_{key}"] = mc[key]
+            for r_, v_ in loc_cand.items():
+                m[f"loc{int(round(r_ * 100)):02d}_candidates"] = float(np.mean(v_)) if v_ else 0.0
+            m["local_mem_size"] = lm.size
         if tol is not None:                          # channel ablation from the SAME run
             for k_ in CH:
                 mc = compute_metrics(obj_labels, ch_obj[k_], point_gts, ch_pts[k_])

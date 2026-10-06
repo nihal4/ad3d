@@ -278,3 +278,42 @@ Same run reports: features only, PTF only, residual with ONE global threshold (T
 - Synthetic sanity check (toy ellipsoid with a naturally variable region, small bumps): features 58.2, uniform residual
   69.5, PTF 73.8, fused 73.4 (O-AUROC); point-level PTF 78.7 < uniform 87.5 (tolerance also damps true defects inside
   variable regions) - a known trade-off to watch on real data.
+
+## STEP 10 result (2026-10-06 23:50): Prototype Tolerance Field fusion -> FAILS both gates, NOT adopted
+12 categories, seed 0, one run (all channels from the same run):
+| O-AUROC | features | geo uniform | geo PTF | fused uniform | FUSED PTF | Template3D-AD |
+|---|---|---|---|---|---|---|
+| mean | 82.0 | 74.4 | 73.8 | 79.1 | 78.6 | 84.4 |
+P-AUROC: 93.1 / 83.4 / 81.2 / 91.5 / 91.1.  P-AUPR: 47.4 / 49.7 / 45.3 / 59.0 / 56.6.
+- Gate 1 (fused >= features + 1.5): FAIL (78.57 vs 81.98). Gate 2 (> 84.4): FAIL.
+- Tolerance field vs one global threshold: no gain (geo 73.8 vs 74.4; P-AUROC 81.2 vs 83.4) -> NEGATIVE for the PTF idea.
+- Geometric channel is category-specific: seahorse 100.0 (all geo variants), fish 93-96.5, diamond fused 99.7; but airplane
+  51-54, gemstone 57, chicken 61, candybar 76. Our geometry does NOT reproduce Template3D-AD on shell (53 vs 92.1) or car (71 vs 88).
+- Localisation: fused-uniform P-AUPR 59.0 vs features 47.4 (+11.6) with P-AUROC -1.6 (observation, not the pre-registered goal).
+- Ceiling: per-category oracle over {features, geo, geou, fused, fuseu} = 84.4 (test-label selection, NOT a result) ->
+  with the current signals no fair combination can exceed Template3D-AD on Real3D-AD.
+- Features-only column (82.0) = same config as mhr6-nn10-pluscut-p99 (81.4 earlier): difference within registration noise.
+- Decision: stop the SOTA search on Real3D-AD; consolidate (STEP 6 seeds on the feature config, then Anomaly-ShapeNet).
+  No further fusion rules will be tried on this test set (would be post-hoc selection).
+
+## Literature check (2026-10-07) - CORRECTION
+- Reg2Inv (NeurIPS 2025) Real3D-AD O-AUROC = 78.0 (from the paper's table; per category: candy 100, diamond 100, fish 67.2,
+  airplane 81.8, car 75.8, chicken 94.4, duck 75.0, gemstone 73.5, seahorse 53.2, shell 69.2, starfish 84.1, toffees 62.6),
+  P-AUROC 87.8. The "~83.9" in our old tables is its ANOMALY-SHAPENET number. Reg2Inv is BELOW us on Real3D-AD.
+- Synthesis4AD (arXiv 2604.04658, Simple3D authors, trained): Real3D-AD O 80.9. Scientific Reports 2026 (Hoang et al.): 78.1.
+- arXiv 2609.35059 claims 89.6 on Real3D-AD but in a cross-dataset setting (trained on Anomaly-ShapeNet) - not comparable,
+  not peer-reviewed.
+- => Template3D-AD (84.4) remains the only verified method above us. Its key difference: it compares each test centre with
+  the descriptor at the CORRESPONDING location of the registered template (location-conditioned), not with a global bank.
+
+## PRE-REGISTRATION (2026-10-07 00:20, BEFORE any real result): NEW METHOD - location-aware memory (step 11)
+Mechanism (src/ad3d/localmem.py, --local-mem 0.10): every training descriptor (aligned prototypes, simulated cuts,
+registered real cuts) keeps the 3D position of its group centre in the registered frame; no coreset. A test descriptor is
+compared only with training descriptors whose centres lie within rho of its own centre (fallback: global NN if none).
+Rationale: shell 58.9 vs Template3D-AD 92.1 - ridge-like defects match normal ridges elsewhere under global search.
+- PRIMARY: rho = 0.10 (unit-normalised frame), object score p99, 12-category O-AUROC mean, seed 0. Fixed now.
+- Same run reports: global memory (current method), rho 0.05 and 0.15 (sensitivity, NOT used to choose).
+- Gate 1 (adopt): loc(0.10) >= global (same run) + 1.5.  Gate 2 (user target): loc(0.10) >= 85.4 (Template3D-AD + 1),
+  then seeds 1,2 before any claim.
+- Synthetic check (toy ellipsoid with ridges on one half; defects = ridge patch on the smooth half, or bump):
+  global O 0.605 -> loc 0.840; misplaced-ridge defects 0.648 -> 1.000; bumps 0.562 -> 0.680; P-AUPR 0.14 -> 0.48.
