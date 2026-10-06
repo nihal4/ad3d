@@ -236,3 +236,14 @@ with registration diamond/gemstone/seahorse still prefer larger scales by 5-7.5)
 - 8 = Simple3D grouping: final config + --num-group 4096 --coreset 0.05. Reference (pluscut-p99, s0) 5-cat O mean 70.78.
   Gate fixed in advance: 5-cat mean >= 72.8 (+2.0). Next in line if it fails: higher resolution.
 - Code: run_parallel.sh SPLIT mode accepts CLASSES=<subset> (merge with --allow-partial).
+
+## STEP 8 result (2026-10-06 21:00): Simple3D grouping (4096 groups, 5% coreset) -> FAIL, dropped
+5 weakest categories, seed 0 (O-AUROC ref -> g4096): airplane 74.1->72.8, car 69.7->68.8, chicken 75.1->76.4,
+duck 75.3->82.3, shell 59.7->59.5; mean 70.78 -> 71.96 (+1.18 < +2.0 gate). P-AUROC mean 91.58 -> 91.34.
+Gain is mostly duck (+7.0), the category that moved +2.4 between two IDENTICAL runs (registration non-determinism);
+the other four are within +/-1.3 noise. Not adopted.
+- Point counts after preprocessing (pluscut s0 scores): 12k-42k per test cloud (seahorse ~12k), cap of 100k NEVER binds;
+  anomalies cover ~330-1500 points (~1-3%). Simple3D's absolute voxel 0.15 ~= 0.0075 in our unit-normalised frame (~2x density).
+## STEP 9 (planned 2026-10-06 21:05): higher resolution, ONE change
+- voxel 0.01 -> 0.007 (~2x points) with max_nn 10 -> 20 to keep the same PHYSICAL neighbourhood; all else = final config.
+  5 weakest categories; gate fixed in advance: 5-cat O mean >= 72.8 (ref 70.78).
