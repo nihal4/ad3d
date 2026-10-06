@@ -26,7 +26,7 @@ from . import datasets as D
 from .features import RegistrationTarget, compute_fpfh_ms, lfsa
 from .memory import MemoryBank
 from .metrics import compute_metrics
-from .scoring import object_score, object_score_stats, point_scores
+from .scoring import object_score, object_score_rule, object_score_stats, point_scores
 
 
 @dataclass
@@ -55,6 +55,7 @@ class Config:
     points_budget: int = 100_000       # hard cap on points after voxel down
     # scoring
     topk: int = 1                      # object score: 1 = max, k>1 = mean of top-k, <=0 = mean of all points
+    obj_rule: str = ""                 # if set, overrides topk: 'max' | 'mean' | 'p99' | 'top200' | 'top1pct' ...
     # training data
     train_cut_root: str = ""           # if set: train on pre-cut single-view clouds <root>/<cls>/train_cut/*
                                        # (GLFM/Simple3D 'Cut Training Data'); official prototypes then only
@@ -321,7 +322,8 @@ class Simple3DLite:
                                     smooth_k=self.cfg.smooth_k,
                                     device=self.cfg.device)
             obj_labels.append(s.label)
-            obj_scores.append(object_score(p_scores, topk=self.cfg.topk))
+            obj_scores.append(object_score_rule(p_scores, self.cfg.obj_rule) if self.cfg.obj_rule
+                              else object_score(p_scores, topk=self.cfg.topk))
             rec = {"file": os.path.basename(s.path), "label": int(s.label),
                    "n_points": int(pts.shape[0]), "n_anom_points": int(gt.sum())}
             rec.update(object_score_stats(p_scores))

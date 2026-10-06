@@ -1,0 +1,4 @@
+{
+ "note": "DERIVED offline from mhr6-nn10-pluscut-s0_real3d_20261004-194111_scores.json: object score = p99 of the point-score map; point-level metrics unchanged (rule only affects object scores).",
+ "source": "mhr6-nn10-pluscut-s0_real3d_20261004-194111"
+}

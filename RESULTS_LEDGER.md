@@ -191,3 +191,24 @@ Then: freeze config -> seeds 1,2 -> ShapeNet 3 seeds.
   cut-mhr6 trails mhr6-nn10 (car 58.4 vs 80.7, chicken 65.5 vs 70.4, seahorse 64.2 vs 55.1 is the exception).
   If pluscut (5a) helps, gate real cuts by registration fitness (e.g. keep only fit >= 0.9).
 - Notebook convention adopted (2026-10-04): only current-step cells active; scripts/nb_activate.py. Current: STEP 5.
+
+## STEP 5 result (2026-10-05 02:00): real cuts ADDED to our memory help; p99 rule confirmed; config FROZEN
+| config (seed 0) | O max | O p99 | O top1pct | O top200 | P-AUROC | P-AUROC pooled | P-AUPR | P-AUPR pooled |
+|---|---|---|---|---|---|---|---|---|
+| mhr6-nn10 (re-run) | 77.9 | 79.5 | 79.4 | 79.3 | 92.2 | 93.0 | 0.435 | 0.328 |
+| mhr6-nn10-pluscut (+ real GLFM cuts) | 80.1 | **81.4** | 81.5 | 81.5 | **93.0** | **93.6** | **0.472** | **0.374** |
+- p99 was named as the preferred rule BEFORE these two runs existed; it beats max by +1.6 / +1.3 here (and +2.5 / +3.1 on
+  the step-4 runs) -> confirmed on runs not used to choose it (still the same Real3D-AD test set: report as such).
+- pluscut vs mhr6-nn10 (O max): seahorse 54.9 -> 75.0 (+20.1), toffees +6.1, gemstone +3.6, airplane +2.3; car 80.7 -> 70.7 (-10.0),
+  duck -2.8. Real-cut registration fitness: car 0.92, chicken 0.81, gemstone 0.75, seahorse 0.85 (others >= 0.95).
+- NON-DETERMINISM: the mhr6-nn10 re-run gave 77.88 vs 78.31 originally. Categories with fitness 1.00 and no pose switch
+  (candybar, car, fish) reproduce exactly; ambiguous ones move 1-3.5 pts (chicken -3.5, toffees -2.7, duck +2.4).
+  Open3D RANSAC is not bit-reproducible -> single registered runs carry ~+/-0.4 mean noise; seeds required.
+- FROZEN FINAL CONFIG = `mhr6-nn10-pluscut-p99`: 360-degree prototypes + 4 simulated cuts/prototype + GLFM real cuts
+  (registered to the prototypes), RANSAC+ICP + MHR(6 poses), MSND max_nn 10 (10/20/30), LFSA 2048x128, coreset 10%,
+  object score = 99th percentile of the point-score map. Reference rows: mhr6-nn10-p99, base-nn10-p99.
+- Seed-0 CSVs for mhr6-nn10-p99 / mhr6-nn10-pluscut-p99 are DERIVED offline from the step-5 _scores.json
+  (results_and_summary/results/*-p99-s0_real3d_20261004-000000.*); point metrics are unchanged by the rule.
+- STEP 6 (running): seeds 1,2 for the two registered configs + base-nn10-p99 seeds 0,1,2.
+- Protocol note for the thesis: the final config uses the GLFM-released cut views of the SAME four training prototypes
+  (no extra objects); report results with and without them (mhr6-nn10-p99 is the no-external-cuts row).

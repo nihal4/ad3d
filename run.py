@@ -61,6 +61,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--points-budget", type=int, default=100_000)
     p.add_argument("--topk", type=int, default=1,
                    help="object score: 1 = max point score, k>1 = mean of top-k, 0 = mean of ALL points (Simple3D on Real3D-AD)")
+    p.add_argument("--obj-rule", default="",
+                   help="object-score rule, overrides --topk: max | mean | p99 | p95 | top200 | top1pct ...")
     p.add_argument("--train-cut-root", default="",
                    help="train on pre-cut single-view clouds <root>/<cls>/train_cut/* instead of the 360-degree prototypes")
     p.add_argument("--train-cut-with-protos", action="store_true",
@@ -89,6 +91,7 @@ def main():
         voxel=args.voxel,
         points_budget=args.points_budget,
         topk=args.topk,
+        obj_rule=args.obj_rule,
         train_cut_root=args.train_cut_root,
         train_cut_with_protos=args.train_cut_with_protos,
         device=args.device,

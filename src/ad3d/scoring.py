@@ -53,3 +53,22 @@ def object_score_stats(point_scores: np.ndarray) -> dict:
     for q in (99, 95, 90):
         out[f"p{q}"] = float(np.percentile(s, q))
     return out
+
+
+def object_score_rule(point_scores: np.ndarray, rule: str) -> float:
+    """Named object-score rule: 'max', 'mean', 'pNN' (NN-th percentile, e.g. 'p99'),
+    'topK' (mean of the K highest, e.g. 'top200'), 'top1pct' (mean of the highest 1%)."""
+    s = np.asarray(point_scores, dtype=np.float64)
+    if rule == "max":
+        return float(s.max())
+    if rule == "mean":
+        return float(s.mean())
+    if rule == "top1pct":
+        k = max(1, int(round(0.01 * s.size)))
+        return float(np.partition(s, -k)[-k:].mean())
+    if rule.startswith("p") and rule[1:].isdigit():
+        return float(np.percentile(s, int(rule[1:])))
+    if rule.startswith("top") and rule[3:].isdigit():
+        k = min(int(rule[3:]), s.size)
+        return float(np.partition(s, -k)[-k:].mean())
+    raise ValueError(f"unknown object-score rule '{rule}'")
