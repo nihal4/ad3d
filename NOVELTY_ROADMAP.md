@@ -158,3 +158,11 @@ Next experiment = the same training data in our pipeline (`--train-cut-root`, no
 registration (cuts are registered to the prototypes exactly like test clouds). Thesis framing either way:
 (a) protocol matters: 360-degree prototypes vs curated cuts is a hidden variable in published comparisons;
 (b) our contribution is measured under BOTH protocols. Next levers after that: offline score-rule analysis, multi-scale set.
+
+## NEW MECHANISM (2026-10-06): Prototype Tolerance Field (PTF)
+Feature memory distance (local shape) x geometric residual to the registered prototypes, where the residual is normalised
+by a per-location tolerance learned from the normal variation BETWEEN the few training prototypes (leave-one-out).
+Differs from Template3D-AD (single template, one global scale, no variation model) and from Reg3D-AD / PatchCore+Raw
+(raw xyz features). 2D analogue: PaDiM's per-position statistics - possible in 3D only after registration, which our
+pipeline already does (with multi-hypothesis pose selection). Novelty claim needs a targeted literature check before writing.
+Ablation built into every --geo run: features | geo-uniform | geo-PTF | fused-uniform | fused-PTF.

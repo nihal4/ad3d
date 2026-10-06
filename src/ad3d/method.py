@@ -61,6 +61,10 @@ class Config:
                                        # (GLFM/Simple3D 'Cut Training Data'); official prototypes then only
                                        # serve as the registration target (align=icp)
     train_cut_with_protos: bool = False  # also keep the full prototypes in the memory bank
+    # geometric channel: Prototype Tolerance Field (needs align='icp'); see geometry.py
+    geo: str = "none"                  # 'none' | 'fuse' (feature x (1 + u)) | 'only' (u alone, ablation)
+    geo_voxel: float = 0.005           # surface sampling of the merged prototypes (unit-normalised frame)
+    geo_k: int = 12                    # test-point smoothing of the normalised residual
     # misc
     device: str = "auto"
     seed: int = 0
@@ -248,8 +252,16 @@ class Simple3DLite:
             # denser registration target: the merged aligned prototypes
             self._reg_target = RegistrationTarget(
                 np.concatenate(proto_frames), voxel=vox)
+            self._tol = None
+            if self.cfg.geo != "none":
+                from .geometry import ToleranceField
+                self._tol = ToleranceField(proto_frames, voxel=self.cfg.geo_voxel)
+                print(f"  [geo] {cls}: tolerance field on {self._tol.ref['n_surface']} surface pts, "
+                      f"median sigma {self._tol.ref['sigma_median']:.4f}", flush=True)
         else:
-            self._ref_center, self._reg_target = None, None
+            if self.cfg.geo != "none":
+                raise ValueError("--geo needs --align icp (the tolerance field lives in the registered frame)")
+            self._ref_center, self._reg_target, self._tol = None, None, None
             proto_frames = [self._normalize(t) for t in trains]
 
         use_protos = (not self.cfg.train_cut_root) or self.cfg.train_cut_with_protos
@@ -295,6 +307,10 @@ class Simple3DLite:
             o3d.utility.random.seed(self.cfg.seed + 7)
 
         obj_labels, obj_scores, point_gts, point_scores_all = [], [], [], []
+        tol = getattr(self, "_tol", None)
+        CH = ("feat", "geo", "geou", "fuseu")        # ablation channels computed in the SAME run
+        ch_obj = {k: [] for k in CH}                 # per-channel object scores (same object rule)
+        ch_pts = {k: [] for k in CH}
         self.sample_records: list[dict] = []
         fitnesses: list[float] = []
         pose_switched = 0
@@ -321,12 +337,28 @@ class Simple3DLite:
             p_scores = point_scores(pts, centers, center_dists,
                                     smooth_k=self.cfg.smooth_k,
                                     device=self.cfg.device)
+            def _obj(v):
+                return (object_score_rule(v, self.cfg.obj_rule) if self.cfg.obj_rule
+                        else object_score(v, topk=self.cfg.topk))
+            ch = {}
+            if tol is not None:
+                u, uu = tol.score(pts, smooth_k=self.cfg.geo_k)
+                # feat = features only; geo = tolerance-normalised residual only; geou = residual with ONE global
+                # threshold (Template3D-AD-like); fuseu = features x (1 + geou)  -> isolates the tolerance field
+                ch = {"feat": p_scores, "geo": u, "geou": uu,
+                      "fuseu": (p_scores * (1.0 + uu)).astype(np.float32)}
+                p_scores = (p_scores * (1.0 + u) if self.cfg.geo == "fuse" else u).astype(np.float32)
+                for k_, v_ in ch.items():
+                    ch_obj[k_].append(_obj(v_))
+                    ch_pts[k_].append(v_)
             obj_labels.append(s.label)
-            obj_scores.append(object_score_rule(p_scores, self.cfg.obj_rule) if self.cfg.obj_rule
-                              else object_score(p_scores, topk=self.cfg.topk))
+            obj_scores.append(_obj(p_scores))
             rec = {"file": os.path.basename(s.path), "label": int(s.label),
                    "n_points": int(pts.shape[0]), "n_anom_points": int(gt.sum())}
             rec.update(object_score_stats(p_scores))
+            for k_, v_ in ch.items():
+                st = object_score_stats(v_)
+                rec.update({f"{k_}_{r_}": st[r_] for r_ in ("max", "p99", "mean")})
             if fitness is not None:
                 rec["fitness"] = float(fitness)
             self.sample_records.append(rec)
@@ -334,6 +366,13 @@ class Simple3DLite:
             point_scores_all.append(p_scores)
 
         m = compute_metrics(obj_labels, obj_scores, point_gts, point_scores_all)
+        if tol is not None:                          # channel ablation from the SAME run
+            for k_ in CH:
+                mc = compute_metrics(obj_labels, ch_obj[k_], point_gts, ch_pts[k_])
+                for key in ("o_auroc", "p_auroc", "p_aupr", "p_auroc_pooled", "p_aupr_pooled"):
+                    m[f"{k_}_{key}"] = mc[key]
+            for k_, v_ in tol.ref.items():
+                m[f"geo_{k_}"] = v_
         if fitnesses:
             m["align_fitness_mean"] = float(np.mean(fitnesses))
         if self._align_voxel_used is not None:

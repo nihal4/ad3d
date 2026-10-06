@@ -256,3 +256,25 @@ aggregation; a fair resolution gain would need re-tuned grouping (coupled multi-
 ## Boost search closed (2026-10-06): both pre-gated boosts negative (grouping +1.18 < +2.0; resolution -5.72).
 Decision: keep the frozen final config `mhr6-nn10-pluscut-p99` (81.4 seed 0) and run STEP 6 seeds.
 Thesis material: two clean, pre-registered negative results (resolution and Simple3D grouping do not transfer).
+
+## PRE-REGISTRATION (2026-10-06 22:45, BEFORE any real result): NEW METHOD - Prototype Tolerance Field (PTF) fusion
+Motivation (evidence): Template3D-AD (IJCAI'25, verified from the paper: single template = first training sample,
+RANSAC+ICP, score = coordinate distance x feature differences, NO model of normal variation) is complementary to us per
+category: they win shell (+32.4), car (+18.3), fish (+12.5), seahorse (+8.8); we win gemstone (+19.7), candybar (+11.5),
+starfish (+6.6), duck (+4.4). Per-category max of the two = 88.1 (oracle, not a result).
+Method (src/ad3d/geometry.py, --geo fuse):
+ 1. aligned prototypes (registration stage) -> point-to-plane ICP refinement into one frame (voxel 0.005);
+ 2. leave-one-out residual of every prototype point to the union of the OTHER prototypes = normal instance variation;
+ 3. tolerance field sigma(x) = LOO residuals averaged over 16 nearest surface points; floor eps = median sigma;
+ 4. test point (after MHR registration + small point-to-plane ICP): residual r to the merged surface
+    (point-to-plane + tangential excess), u = r / (sigma(nearest) + eps), averaged over 12 nearest test points;
+ 5. fused point score = feature score x (1 + u)   [scale-free product: no tuned weight]; object score = p99.
+Same run reports: features only, PTF only, residual with ONE global threshold (Template3D-AD-like), and that fused
+-> isolates the contribution of the tolerance field itself.
+- PRIMARY: fused (PTF) O-AUROC, 12-category mean, seed 0 (step 10).
+- Gate 1 (adopt): fused >= features-only of the SAME run + 1.5.   Gate 2 (SOTA claim candidate): fused > 84.4,
+  then confirmed with seeds 1,2 (step 6 updated to the fused config) before any claim.
+- Nothing is tuned on this run: voxel 0.005, k 16/12, product fusion, p99 are fixed now.
+- Synthetic sanity check (toy ellipsoid with a naturally variable region, small bumps): features 58.2, uniform residual
+  69.5, PTF 73.8, fused 73.4 (O-AUROC); point-level PTF 78.7 < uniform 87.5 (tolerance also damps true defects inside
+  variable regions) - a known trade-off to watch on real data.

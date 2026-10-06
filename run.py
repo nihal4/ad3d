@@ -63,6 +63,10 @@ def parse_args() -> argparse.Namespace:
                    help="object score: 1 = max point score, k>1 = mean of top-k, 0 = mean of ALL points (Simple3D on Real3D-AD)")
     p.add_argument("--obj-rule", default="",
                    help="object-score rule, overrides --topk: max | mean | p99 | p95 | top200 | top1pct ...")
+    p.add_argument("--geo", default="none", choices=["none", "fuse", "only"],
+                   help="Prototype Tolerance Field geometric channel (needs --align icp): fuse = feature x (1+u)")
+    p.add_argument("--geo-voxel", type=float, default=0.005)
+    p.add_argument("--geo-k", type=int, default=12)
     p.add_argument("--train-cut-root", default="",
                    help="train on pre-cut single-view clouds <root>/<cls>/train_cut/* instead of the 360-degree prototypes")
     p.add_argument("--train-cut-with-protos", action="store_true",
@@ -92,6 +96,7 @@ def main():
         points_budget=args.points_budget,
         topk=args.topk,
         obj_rule=args.obj_rule,
+        geo=args.geo, geo_voxel=args.geo_voxel, geo_k=args.geo_k,
         train_cut_root=args.train_cut_root,
         train_cut_with_protos=args.train_cut_with_protos,
         device=args.device,
