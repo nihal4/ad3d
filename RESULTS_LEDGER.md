@@ -247,3 +247,12 @@ the other four are within +/-1.3 noise. Not adopted.
 ## STEP 9 (planned 2026-10-06 21:05): higher resolution, ONE change
 - voxel 0.01 -> 0.007 (~2x points) with max_nn 10 -> 20 to keep the same PHYSICAL neighbourhood; all else = final config.
   5 weakest categories; gate fixed in advance: 5-cat O mean >= 72.8 (ref 70.78).
+
+## STEP 9 result (2026-10-06 21:45): higher resolution (voxel 0.007, max_nn 20) -> FAIL, dropped
+5 weakest categories, seed 0 (O-AUROC ref -> hires): airplane 74.1->60.7, car 69.7->70.2, chicken 75.1->74.3,
+duck 75.3->69.8, shell 59.7->50.3; mean 70.78 -> 65.06 (-5.72). P-AUROC 91.58 -> 90.5.
+Likely cause: LFSA groups (2048 x 128 points) shrink to ~half the surface area at 2x density -> noisier, more local
+aggregation; a fair resolution gain would need re-tuned grouping (coupled multi-parameter search) - not pursued.
+## Boost search closed (2026-10-06): both pre-gated boosts negative (grouping +1.18 < +2.0; resolution -5.72).
+Decision: keep the frozen final config `mhr6-nn10-pluscut-p99` (81.4 seed 0) and run STEP 6 seeds.
+Thesis material: two clean, pre-registered negative results (resolution and Simple3D grouping do not transfer).
