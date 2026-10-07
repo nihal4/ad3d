@@ -317,3 +317,19 @@ Rationale: shell 58.9 vs Template3D-AD 92.1 - ridge-like defects match normal ri
   then seeds 1,2 before any claim.
 - Synthetic check (toy ellipsoid with ridges on one half; defects = ridge patch on the smooth half, or bump):
   global O 0.605 -> loc 0.840; misplaced-ridge defects 0.648 -> 1.000; bumps 0.562 -> 0.680; P-AUPR 0.14 -> 0.48.
+
+## STEP 11 result (2026-10-07 05:40): location-aware memory -> PASSES both pre-registered gates (seed 0)
+12 categories, seed 0, one run (all channels from the same run):
+| O-AUROC | global (current) | loc rho .05 | LOC rho .10 (PRIMARY) | loc rho .15 | Template3D-AD |
+|---|---|---|---|---|---|
+| mean | 81.5 | 86.0 | **85.6** | 86.2 | 84.4 |
+Per category (global -> loc .10): airplane 73.9->78.5, candybar 98.5->100, car 69.3->82.8, chicken 76.7->72.7,
+diamond 98.3->100, duck 75.5->89.7, fish 85.5->100, gemstone 83.7->78.7, seahorse 81.1->90.6, shell 59.0->56.3,
+starfish 89.3->85.8, toffees 87.7->92.3.
+P-AUROC (per-sample mean): 93.1 -> 95.1 (rho .05/.15: 94.6/95.3). P-AUPR: 47.4 -> 61.2 (62.9/60.8).
+- Gate 1 (>= global + 1.5): PASS (85.61 vs 81.54). Gate 2 (>= 85.4): PASS by 0.21 - within single-run noise (~+/-0.4).
+- Robust to radius: all three radii > 84.4. PRIMARY stays rho 0.10 (pre-registered); no post-hoc switch to 0.15.
+- Shell hypothesis FAILED: location-aware memory did not fix shell (56.3 vs Template3D-AD 92.1); gains came from car, duck,
+  fish, seahorse, airplane. Losses: gemstone -5.0, chicken -4.0, starfish -3.5, shell -2.7.
+- NEW FINAL CONFIG = `mhr6-nn10-pluscut-p99-loc10`. Claims need seeds 1,2 (step 12) + Anomaly-ShapeNet check.
+- To verify: Template3D-AD's P-AUROC 92.5 convention (per-sample vs pooled) before comparing point-level numbers.
