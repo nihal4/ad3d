@@ -473,3 +473,31 @@ Pooled: loc P-AUROC 95.17, P-AUPR 54.36.
 - p99-vs-max row: NOT free any more - the step-12 _scores.json were not kept. Each ablation run saves max/p99/mean per
   sample, so the pooling comparison can be made on those runs, or on a re-run of the final config.
 - No decision gates: ablation rows are reported whatever they show. Timing goes to logs/timing.log.
+
+## Paper: Experiments section drafted (2026-10-08) - paper/experiments.tex
+- Results only, no discussion. Pending cells: ablation rows "- real cuts", "- single pose" (step 15) and the Real3D-AD
+  running time. ISMP left out of the per-category table: its per-category values (from Kang et al.'s table) average
+  75.7, not its reported 76.7. All competitor values to be re-checked against the original papers before submission.
+
+## STEP 15 session A result (2026-10-08): "without real single-view cuts" (`mhr6-nn10-p99-loc10`), Real3D-AD
+Files: results_and_summary/results/step15/ (merged CSVs, parts incl. _scores.json, logs, timing.log).
+- Location-aware (rho=0.10) O-AUROC: 85.59 / 85.58 / 87.88 -> 86.35 +/- 1.33. Paired diff to the full method
+  (85.62 / 85.73 / 88.16): -0.03 / -0.15 / -0.28 -> -0.15. => real single-view scans add almost nothing once memory
+  is location-aware. (Global memory in the same runs: 79.66 / 79.05 / 80.48 = 79.73 +/- 0.72, i.e. real scans give
+  global matching +1.6; not in the paper.)
+- Point level (loc10): per-sample P-AUROC 94.61 +/- 0.37, P-AUPR 60.23 +/- 0.60; pooled 94.70 / 44.61.
+- Timing (first measured Real3D-AD numbers): 55 / 53 / 53 min per seed, 1,206 scans -> 2.6-2.7 s per scan.
+- Object-score pooling, POST HOC, from the saved per-sample scores (12-category mean, seeds 0/1/2 -> mean):
+  loc10 max 85.88 / 86.42 / 87.97 -> 86.76; loc10 p99 -> 86.35; loc10 mean -> 81.39; top1pct 86.83.
+  glob max 77.30 vs glob p99 79.73. => p99 was chosen (step 3) with GLOBAL memory, where it beats max by +2.4;
+  with location-aware memory max is +0.4 higher than p99 in this configuration. The method stays FROZEN at p99
+  (changing it now would be selection on the test set); the pooling comparison on the full method is reported as an
+  ablation row once session B (15b2) gives the full method's per-sample scores.
+- Paper: ablation row "without real single-view training scans" = 86.4 +/- 1.3, Delta -0.2; cost table Real3D-AD
+  53-55 min / 2.6-2.7 s (footnote: measured without the real scans); methodology TODO filled.
+
+## STEP 15 session B (prepared 2026-10-08)
+- 15b: without pose hypotheses (`icp-nn10-pluscut-p99-loc10`), seeds 0 1 2.
+- 15b2 (new): full method `mhr6-nn10-pluscut-p99-loc10` re-run, seeds 0 1 2 -> run time of the full method,
+  per-sample scores for the p99-vs-max row, reproducibility check of step 12 (expected 85.62 / 85.73 / 88.16).
+- Output zip renamed results_15b.zip. Expected 4-5 h in total.
