@@ -411,3 +411,57 @@ Pooled: loc P-AUROC 95.17, P-AUPR 54.36.
   Normalizing Flows" (site down). Check these three before claiming Real3D-AD SOTA in the thesis.
 
 ## STEP 14 (prepared): alignment diagnostic, scripts/diag_align.py (method.py now keeps _proto_frames; no behaviour change)
+
+## AT3D-AD read (2026-10-08, PDF supplied by user) - CHANGES THE REAL3D-AD CLAIM
+- AT3D-AD (Zeng, Lu, Gao; arXiv 2609.25930, 22 Sep 2026; preprint, NOT peer-reviewed). Real3D-AD O-AUROC 91.9 single view,
+  95.0 with 10-view rotation test-time augmentation; Anomaly-ShapeNet 96.9 / 98.1. P-AUROC Real3D 95.2 (TTA).
+- Setting: TRAINED. ULIP-2 PointBERT initialisation (large external 3D-language pre-training), LoRA-tuned 250 epochs,
+  supervised by synthetic anomalies (PDPAS), one model per dataset, 10k-point inputs, final-epoch checkpoint, no seeds
+  reported. Its Real3D-AD table does not list Template3D-AD; it calls CASL (AAAI 2026) 82.3 the previous best.
+- Peer-reviewed numbers in its tables we had not recorded: CASL (AAAI 2026) Real3D 82.3; Simple3D (AAAI 2026) Real3D 80.4
+  (now confirmed); MFF-M3AD (Neural Networks 2026) 81.1; PA3AD (Pattern Recognition 2026) 78.9.
+- => Our 86.5 is NOT the highest reported Real3D-AD number. Claim to use: best among TRAINING-FREE methods and best
+  PEER-REVIEWED result under the standard protocol (to our knowledge); cite AT3D-AD as a concurrent trained preprint
+  with external pre-training and TTA. Still unread: CVPR 2026 codebook paper (2604.03972), MDPI MAKE 8(7):206.
+
+## CVPR 2026 codebook paper read (2026-10-08, PDF supplied by user) - claim HOLDS
+- "Hierarchical Point-Patch Fusion with Adaptive Patch Codebook for 3D Shape Anomaly Detection" (Kang, Li, Lan, Gong,
+  Khoshelham, Nan; CVPR 2026, arXiv 2604.03972). Trained: Minkowski 3D U-Net pre-trained on large-scale 3D data,
+  1500 epochs per category, negative (pseudo-anomaly) augmentation.
+- Real3D-AD O-AUROC 84.2 (per category: airplane 87.5, car 75.6, candy 86.8, chicken 82.3, diamond 90.1, duck 91.6,
+  fish 92.4, gemstone 70.1, seahorse 86.3, shell 83.7, starfish 78.5, toffees 85.9). Below ours (86.5) and below
+  Template3D-AD (84.4; not in its table). Anomaly-ShapeNet 87.6 (ours: loc 87.1, global 89.9; SeDiR 93.3).
+- => Peer-reviewed Real3D-AD ranking (to our knowledge): ours 86.5 > Template3D-AD 84.4 > codebook (CVPR26) 84.2 >
+  CASL 82.3 > MFF-M3AD 81.1 > SeDiR 81.0 > Simple3D 80.4 > PASDF 80.2. Only remaining unread: MDPI MAKE 8(7):206 (2026).
+
+## MDPI MAKE paper read (2026-10-08) - claim HOLDS; literature check of the flagged 2026 papers COMPLETE
+- AdvFlow3D-AD, "Alignment-Aware 3D Point Cloud Anomaly Detection with Adversarial Normalizing Flows" (Jimenez-Garcia et
+  al.; Mach. Learn. Knowl. Extr. 2026, 8, 206; published 13 Jul 2026; doi 10.3390/make8070206). Registration (FGR +
+  multi-scale ICP) + adversarial normalizing flow, trained 30 epochs on the aligned normals.
+- Real3D-AD object AUROC: no mean printed; mean of its 12 per-category values = 74.4 (we computed it). Point AUROC 74.7.
+  Anomaly-ShapeNet: only 10 of 40 categories reported (0.816) -> not comparable to 40-category means.
+- => Final peer-reviewed Real3D-AD ranking, to our knowledge: ours 86.5 > Template3D-AD 84.4 > codebook CVPR26 84.2 >
+  CASL 82.3 > MFF-M3AD 81.1 > SeDiR 81.0 > Simple3D 80.4 > PASDF 80.2 > ... > AdvFlow3D-AD 74.4.
+  Only AT3D-AD (arXiv preprint, trained, TTA) reports higher (91.9 / 95.0). Re-check before submission/defence.
+
+## STEP 14 result (2026-10-08): alignment diagnostic -> explanation (a) "pose errors" REJECTED for most cases
+180 normal test samples, 12 categories (6 failing, 6 control), seed 0, joined with step-13 per-sample scores.
+- Alignment of the failing categories is as good as the controls: median residual / prototype-to-prototype residual
+  0.87 (failing) vs 0.88 (control); median fine-ICP correction 0.09 deg vs 0.09 deg.
+- Of the 15 normal samples whose location-aware score is >3x their global score, only 3 are misaligned
+  (cap3 positive9: fine ICP rotates 12.1 deg, p99 residual 16x the prototype reference; cap3 positive12: 8.2 deg;
+  cap5 positive0: p99 residual 93x). The other 12 (e.g. cap3 positive10, ratio 5.0, ICP correction 0.06 deg, residual
+  0.89x the prototype reference) are aligned to within the sampling spacing.
+- => Main cause is NOT pose. The surface sits where the training surface sits, yet its local descriptors do not match
+  the few training descriptors at that place; the global bank (all positions, far more candidates) finds a close match
+  elsewhere. Likely descriptor/sampling variability at the small FPFH scale (nn10) on thin, smooth shells (caps):
+  the minimum over few candidates is inflated. Pose errors explain a minority (3/15).
+- Possible fix (POST HOC, must be disclosed, test on BOTH datasets): calibrate local distances per location with a
+  training-only reference (leave-one-cloud-out nearest distance among training descriptors within rho), PaDiM-style.
+- Notebook: cell 14a's wait loop never ended (pgrep matched its own command line); fixed with `wait`.
+
+## Timing (2026-10-08)
+- Anomaly-ShapeNet, final method minus real cuts, SPLIT over 2x T4 (4 vCPU): 66-69 min per seed (1,312 test scans),
+  from file timestamps of results_13 (s1 04:35->05:42, s2 05:42->06:51).
+- Real3D-AD final config: NOT measured (results_12 logs not kept). run_parallel.sh now writes logs/timing.log
+  (start + wall-clock minutes per config/seed) so the next Real3D-AD run records it for the paper.

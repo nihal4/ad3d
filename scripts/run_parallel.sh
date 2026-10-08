@@ -72,6 +72,7 @@ if [ "${SPLIT:-0}" = "1" ]; then
   PARTIAL=""
   if [ -n "${CLASSES:-}" ]; then IFS=',' read -r -a CATS <<< "$CLASSES"; PARTIAL="--allow-partial"; fi   # category subset (screening)
   for name in $CONFIGS; do for s in $SEEDS; do
+    t0=$(date +%s); echo "[timing] ${name} seed ${s} start $(date '+%F %T')" | tee -a logs/timing.log
     pids=()
     for g in $(seq 0 $((NGPU-1))); do
       list=""; for i in "${!CATS[@]}"; do [ $((i % NGPU)) -eq "$g" ] && list="${list:+$list,}${CATS[$i]}"; done
@@ -82,6 +83,7 @@ if [ "${SPLIT:-0}" = "1" ]; then
     done
     for p in "${pids[@]}"; do wait "$p"; done
     python scripts/merge_categories.py --dataset "$DATASET" $PARTIAL "${name}-s${s}" results/parts/${name}-s${s}-part*_${DATASET}_*[0-9].csv
+    echo "[timing] ${name} seed ${s} ${DATASET} wall-clock $(( ($(date +%s) - t0) / 60 )) min" | tee -a logs/timing.log
   done; done
   exit 0
 fi
