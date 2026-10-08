@@ -501,3 +501,29 @@ Files: results_and_summary/results/step15/ (merged CSVs, parts incl. _scores.jso
 - 15b2 (new): full method `mhr6-nn10-pluscut-p99-loc10` re-run, seeds 0 1 2 -> run time of the full method,
   per-sample scores for the p99-vs-max row, reproducibility check of step 12 (expected 85.62 / 85.73 / 88.16).
 - Output zip renamed results_15b.zip. Expected 4-5 h in total.
+
+## STEP 15 session B result (2026-10-09), Real3D-AD, files: results_and_summary/results/step15b/
+- (B) without pose hypotheses (`icp-nn10-pluscut-p99-loc10`): loc10 O-AUROC 86.21 / 84.22 / 86.76 -> 85.73 +/- 1.34;
+  paired diff to step 12: +0.59 / -1.51 / -1.40 -> -0.78 (vs the re-run: -0.76). Point (loc10): per-sample
+  P-AUROC 94.89 +/- 0.12, P-AUPR 61.99 +/- 0.40. 53 min per seed.
+- Full method re-run (`mhr6-nn10-pluscut-p99-loc10`, 15b2): 85.09 / 86.46 / 87.93 -> 86.49 +/- 1.42 (step 12:
+  85.62 / 85.73 / 88.16 -> 86.50 +/- 1.43). Mean reproduced; per-seed differences up to 0.73 (Open3D multi-threaded
+  RANSAC is not bit-wise deterministic although seeds are set). Global in the same runs 81.46 +/- 0.74.
+  Point level, complete for all 3 seeds: loc10 per-sample 95.64 +/- 0.30 / 62.74 +/- 1.24, pooled 95.43 +/- 0.34 /
+  45.85 +/- 2.55; global per-sample 93.10 +/- 0.16 / 47.48 +/- 0.63, pooled 93.67 +/- 0.15 / 37.20 +/- 1.03.
+  Pose switch rate (MHR picks a non-RANSAC hypothesis) 9.6 % of test scans. Run time 57 min per seed (2.8 s/scan).
+- Object-score pooling on the full method (re-run, same runs): loc10 max 85.49 / 87.58 / 89.11 -> 87.39 +/- 1.82;
+  p99 86.49; paired max - p99: +0.40 / +1.12 / +1.18 -> +0.90 (positive in all seeds; also +0.67 without MHR and
+  +0.41 without real scans). Global memory: p99 81.46 > max 80.11. => p99 (chosen in step 3 with global memory) is
+  not the best rule for location-aware memory. Method stays FROZEN at p99 (post hoc, would be test-set selection);
+  the max row is reported in the ablation table as a replacement row. SOTA claim unaffected either way.
+- Paper updated: ablation table complete (global -5.1, real scans -0.2, MHR -0.8, max instead of p99 +0.9),
+  repeat-run note; point table Real3D-AD rows from the re-run (all 4 metrics, 3 seeds, both memories); cost table
+  Real3D-AD 57 min / 2.8 s; methodology run time filled. No experiments pending.
+
+## Paper: Discussion section drafted (2026-10-09) - paper/discussion.tex
+- RQ1-RQ3 interpretation, practical implications, limitations, next steps (per-location calibration). Uses only
+  numbers already in the ledger; p99-vs-max reported as a hindsight finding, method stays at p99.
+- 2026-10-09: conclusion.tex and introduction.tex drafted; all six sections now in main.tex (21 pages). Missing: title, authors, abstract.
+- 2026-10-09: introduction expanded (~1,300 words, 9 paragraphs + contributions) with teaser Fig. 1 (figures/results/teaser.pdf: global vs location-aware illustration + Real3D-AD comparison). Paper 22 pages.
+- 2026-10-09: reviewer/editor pass applied (terminology, symbols S/K_s, eqref and Fig./Sec. convention, RQs moved to Introduction, zero-shot merged into gap, notation table, p99 justification aligned with ablation, bib fixes + Arun 1987, DOIs hidden as xdoi, overview figure inset replaced by fallback bank).

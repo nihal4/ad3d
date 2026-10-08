@@ -1,2 +1,30 @@
 tests/_synthetic/
 __pycache__/
+
+# ---------------------------------------------------------------------------
+# PRIVATE: manuscript (unpublished). Never push to the public repository.
+# The whole paper/ folder (LaTeX sources, bibliography, figures, figure
+# scripts, renders, compiled PDF) stays local only.
+# ---------------------------------------------------------------------------
+paper/
+
+# safety net: any LaTeX / manuscript file anywhere else in the repo
+*.tex
+*.bib
+*.bst
+*.cls
+*.sty
+*.bbl
+*.blg
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+paper_draft*.pdf
+figures_pdf/
+figures_pdf.zip
