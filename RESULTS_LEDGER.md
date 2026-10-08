@@ -333,3 +333,34 @@ P-AUROC (per-sample mean): 93.1 -> 95.1 (rho .05/.15: 94.6/95.3). P-AUPR: 47.4 -
   fish, seahorse, airplane. Losses: gemstone -5.0, chicken -4.0, starfish -3.5, shell -2.7.
 - NEW FINAL CONFIG = `mhr6-nn10-pluscut-p99-loc10`. Claims need seeds 1,2 (step 12) + Anomaly-ShapeNet check.
 - To verify: Template3D-AD's P-AUROC 92.5 convention (per-sample vs pooled) before comparing point-level numbers.
+
+## STEP 12 result (2026-10-08): final config `mhr6-nn10-pluscut-p99-loc10`, seeds 0,1,2 -> CLAIM CONFIRMED
+| O-AUROC (12-cat mean) | seed 0 | seed 1 | seed 2 | mean +/- std |
+|---|---|---|---|---|
+| global memory (same runs) | 81.54 | 80.82 | 81.72 | 81.36 +/- 0.48 |
+| **loc rho .10 (PRIMARY)** | 85.62 | 85.73 | 88.16 | **86.50 +/- 1.43** |
+| loc rho .05 (sensitivity) | 86.0 | 85.43 | 88.93 | 86.79 |
+| loc rho .15 (sensitivity) | 86.2 | 86.29 | 87.99 | 86.83 |
+- Template3D-AD 84.4: beaten by +2.1 on the 3-seed mean; EVERY seed (min 85.62) is above both 84.4 and 85.4.
+- Paired gain of location-aware memory over global memory: +4.1 / +4.9 / +6.4 per seed (+5.1 mean).
+- Radius: all three radii within ~0.3 of each other on the mean -> robust; PRIMARY stays 0.10 (no post-hoc switch).
+Per category, 3-seed mean (std) vs Template3D-AD: airplane 81.5 (2.6) vs 71.8 | candybar 100.0 (0) vs 87.5 |
+car 84.4 (1.6) vs 88.0 | chicken 76.5 (3.7) vs 78.6 | diamond 100.0 (0) vs 99.2 | duck 90.9 (2.1) vs 70.9 |
+fish 99.9 (0.1) vs 98.0 | gemstone 78.7 (0.3) vs 62.9 | seahorse 89.3 (2.8) vs 88.5 | shell 54.4 (8.2) vs 92.1 |
+starfish 90.1 (4.0) vs 82.9 | toffees 92.3 (0.3) vs 92.4.  -> better on 8/12, worse on car, chicken, shell, toffees (tie).
+Point level (per-sample mean, 3 seeds): P-AUROC 95.1/95.96/95.68 = 95.6; P-AUPR 61.2/63.39/63.93 = 62.8.
+Pooled (seeds 1,2): P-AUROC 95.5/95.7, P-AUPR 45.6/46.8. (Template3D-AD P-AUROC 92.5, convention still unverified.)
+Caveats to state in the thesis: (1) scale, p99, real cuts and rho were chosen on the Real3D-AD test set (no validation
+split exists) -> selection-bias disclosure + Anomaly-ShapeNet check with everything frozen; (2) shell is near chance
+(54.4, std 8.2) and is the clear failure case; (3) seed 2 is high (88.2) - quote the mean +/- std, never the best seed.
+NEXT (frozen config, no more tuning on Real3D-AD): 3-seed ablation rows, Anomaly-ShapeNet 3 seeds.
+
+## PRE-REGISTRATION (2026-10-08, BEFORE any result): STEP 13 - Anomaly-ShapeNet held-out check
+- Config `mhr6-nn10-p99-loc10` = the frozen final method minus real cuts (GLFM cuts exist only for Real3D-AD).
+  Nothing is tuned on Anomaly-ShapeNet; no second config will be tried on it after seeing this result.
+- Seeds 0,1,2, 40 categories, each seed split by category over 2 GPUs (SPLIT mode now supports shapenet).
+- PRIMARY: loc rho 0.10 O-AUROC, 40-category mean, mean +/- std over 3 seeds. Same runs give the global-memory channel.
+- Gate G1 (location-aware memory transfers): loc10 3-seed mean >= global 3-seed mean.
+- Reported against (no gate, report whatever comes): Template3D-AD 86.5, PASDF 90.0 (verified); Simple3D 86.0 and Reg2Inv
+  86.1 (not verified); our old base nn100 88.1 (2 runs). Risk on record: the scale nn10 was chosen on Real3D-AD and may
+  not suit Anomaly-ShapeNet; if it drops, that is reported as a limitation, not fixed by re-tuning on this test set.

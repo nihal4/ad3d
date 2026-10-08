@@ -13,7 +13,7 @@
 # i.e. only ~1.25x faster than sequential - the CPU, not the GPU, is the bottleneck.
 #
 # Env: NGPU (default: detected, else 2)  CONFIGS  SPLIT=1  CLASSES=a,b,c (SPLIT mode: only these categories)  DATASET=real3d|shapenet (default real3d;
-#      shapenet supports MODE 1 only). e.g. DATASET=shapenet CONFIGS="base" bash scripts/run_parallel.sh <SHAPENET_ROOT> 1 2
+#      both modes). e.g. DATASET=shapenet CONFIGS="base" bash scripts/run_parallel.sh <SHAPENET_ROOT> 1 2
 set -uo pipefail
 ROOT="$1"; shift
 SEEDS="${@:-0 1 2}"
@@ -51,6 +51,7 @@ declare -A CFG=(
   [mhr6-nn10-pluscut-p99-g4096]="--align icp --cuts 4 --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT} --train-cut-with-protos --obj-rule p99 --num-group 4096 --coreset 0.05"
   [mhr6-nn20-pluscut-p99-vx007]="--align icp --cuts 4 --align-poses 6 --max-nn 20 --voxel 0.007 --train-cut-root ${CUT_ROOT} --train-cut-with-protos --obj-rule p99"
   [mhr6-nn10-pluscut-p99-geo]="--align icp --cuts 4 --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT} --train-cut-with-protos --obj-rule p99 --geo fuse"
+  [mhr6-nn10-p99-loc10]="--align icp --cuts 4 --align-poses 6 --max-nn 10 --obj-rule p99 --local-mem 0.10"
   [mhr6-nn10-pluscut-p99-loc10]="--align icp --cuts 4 --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT} --train-cut-with-protos --obj-rule p99 --local-mem 0.10"
   [cut-mhr6-nn10-protos]="--align icp --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT} --train-cut-with-protos"
   [icp-cuts4-nn20]="--align icp --cuts 4 --max-nn 20"
@@ -61,13 +62,13 @@ declare -A CFG=(
 for _c in ${CONFIGS:-}; do case "$_c" in cut-*|*pluscut*) [ -z "$CUT_ROOT" ] && { echo "[!] config $_c needs CUT_ROOT=<folder with <cls>/train_cut>"; exit 1; };; esac; done
 CONFIGS="${CONFIGS:-base icp-cuts4 mhr6}"
 DATASET="${DATASET:-real3d}"
-if [ "$DATASET" != "real3d" ] && [ "${SPLIT:-0}" = "1" ]; then echo "SPLIT=1 supports real3d only"; exit 1; fi
 mkdir -p logs results/parts
 echo "[parallel] gpus=$NGPU cpus=$NCPU threads/proc=$THREADS  configs: $CONFIGS  seeds: $SEEDS"
 
 if [ "${SPLIT:-0}" = "1" ]; then
   # interleave categories so heavy ones are spread across GPUs
-  CATS=(airplane candybar car chicken diamond duck fish gemstone seahorse shell starfish toffees)
+  CATS=($(PYTHONPATH=src python -c "from ad3d.datasets import get_classes; print(' '.join(get_classes('$DATASET')))"))
+  [ "${#CATS[@]}" -gt 0 ] || { echo "[!] could not list categories for $DATASET"; exit 1; }
   PARTIAL=""
   if [ -n "${CLASSES:-}" ]; then IFS=',' read -r -a CATS <<< "$CLASSES"; PARTIAL="--allow-partial"; fi   # category subset (screening)
   for name in $CONFIGS; do for s in $SEEDS; do
@@ -80,7 +81,7 @@ if [ "${SPLIT:-0}" = "1" ]; then
       pids+=($!)
     done
     for p in "${pids[@]}"; do wait "$p"; done
-    python scripts/merge_categories.py $PARTIAL "${name}-s${s}" results/parts/${name}-s${s}-part*_real3d_*[0-9].csv
+    python scripts/merge_categories.py --dataset "$DATASET" $PARTIAL "${name}-s${s}" results/parts/${name}-s${s}-part*_${DATASET}_*[0-9].csv
   done; done
   exit 0
 fi
