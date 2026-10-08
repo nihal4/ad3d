@@ -465,3 +465,11 @@ Pooled: loc P-AUROC 95.17, P-AUPR 54.36.
   from file timestamps of results_13 (s1 04:35->05:42, s2 05:42->06:51).
 - Real3D-AD final config: NOT measured (results_12 logs not kept). run_parallel.sh now writes logs/timing.log
   (start + wall-clock minutes per config/seed) so the next Real3D-AD run records it for the paper.
+
+## STEP 15 (prepared 2026-10-08): ablation of the final method on Real3D-AD, 3 seeds per row
+- Rows (one component removed, all else frozen): (A) without real single-view cuts = `mhr6-nn10-p99-loc10`;
+  (B) without pose hypotheses = `icp-nn10-pluscut-p99-loc10` (single pose for test scans AND real cuts).
+- Already available (step 12): final 86.50 +/- 1.43; without location-aware memory (global) 81.36 +/- 0.48.
+- p99-vs-max row: NOT free any more - the step-12 _scores.json were not kept. Each ablation run saves max/p99/mean per
+  sample, so the pooling comparison can be made on those runs, or on a re-run of the final config.
+- No decision gates: ablation rows are reported whatever they show. Timing goes to logs/timing.log.

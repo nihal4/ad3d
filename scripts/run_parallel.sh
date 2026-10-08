@@ -52,6 +52,7 @@ declare -A CFG=(
   [mhr6-nn20-pluscut-p99-vx007]="--align icp --cuts 4 --align-poses 6 --max-nn 20 --voxel 0.007 --train-cut-root ${CUT_ROOT} --train-cut-with-protos --obj-rule p99"
   [mhr6-nn10-pluscut-p99-geo]="--align icp --cuts 4 --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT} --train-cut-with-protos --obj-rule p99 --geo fuse"
   [mhr6-nn10-p99-loc10]="--align icp --cuts 4 --align-poses 6 --max-nn 10 --obj-rule p99 --local-mem 0.10"
+  [icp-nn10-pluscut-p99-loc10]="--align icp --cuts 4 --align-poses 1 --max-nn 10 --train-cut-root ${CUT_ROOT} --train-cut-with-protos --obj-rule p99 --local-mem 0.10"
   [mhr6-nn10-pluscut-p99-loc10]="--align icp --cuts 4 --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT} --train-cut-with-protos --obj-rule p99 --local-mem 0.10"
   [cut-mhr6-nn10-protos]="--align icp --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT} --train-cut-with-protos"
   [icp-cuts4-nn20]="--align icp --cuts 4 --max-nn 20"
