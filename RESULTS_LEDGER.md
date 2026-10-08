@@ -364,3 +364,50 @@ NEXT (frozen config, no more tuning on Real3D-AD): 3-seed ablation rows, Anomaly
 - Reported against (no gate, report whatever comes): Template3D-AD 86.5, PASDF 90.0 (verified); Simple3D 86.0 and Reg2Inv
   86.1 (not verified); our old base nn100 88.1 (2 runs). Risk on record: the scale nn10 was chosen on Real3D-AD and may
   not suit Anomaly-ShapeNet; if it drops, that is reported as a limitation, not fixed by re-tuning on this test set.
+
+## STEP 13 result (2026-10-08): Anomaly-ShapeNet, frozen method, seeds 0,1,2 -> gate G1 FAILS
+| O-AUROC (40-cat mean) | seed 0 | seed 1 | seed 2 | mean +/- std |
+|---|---|---|---|---|
+| **loc rho .10 (PRIMARY, pre-registered)** | 87.68 | 87.10 | 86.54 | **87.11 +/- 0.57** |
+| global memory (same runs) | 90.12 | 89.51 | 90.07 | 89.90 +/- 0.33 |
+| loc rho .05 / .15 | | | | 85.04 / 87.68 |
+Point level (per-sample mean): loc P-AUROC 94.23, P-AUPR 66.98; global 92.89, 65.61 (loc better at point level).
+Pooled: loc P-AUROC 95.17, P-AUPR 54.36.
+- G1 (loc >= global): FAIL, -2.8 on the mean, every seed. Better on 19/40 categories, worse on 20.
+- Large losses concentrate on caps (cap3 -29.4, cap5 -24.3, cap4 -19.1), vase0 -25.7, vase4 -16.6, tap1 -16.3, headset0 -15.4.
+  Gains: vase7 +10.8, headset1/helmet1 +9.4, bowl4 +9.1, vase2 +8.9, helmet3 +8.4, bag0 +7.0.
+- Hypothesis (UNTESTED): location-aware memory relies on accurate registration; thin / near-symmetric shapes (caps, vases)
+  register ambiguously, so normal regions are compared with the wrong location. Test offline from the _scores.json
+  (per-sample fitness, no GPU): do the losing categories have lower registration fitness or more spread between poses?
+- Reporting: the PRIMARY ShapeNet number stays loc10 = 87.1 (pre-registered; no post-hoc switch). The global channel
+  (89.9) is reported as the ablation. vs published: Template3D-AD 86.5 (loc +0.6, global +3.4), PASDF 90.0 (loc -2.9,
+  global -0.1). Held-out check of the EARLIER choices (scale nn10, p99, MHR): global 89.9 vs old base nn100 88.1 -> they
+  transfer. Thesis finding: location-aware memory is dataset-dependent (+5.1 Real3D-AD, -2.8 Anomaly-ShapeNet).
+- Any fix designed after seeing this (e.g. choosing loc vs global per category from a TRAINING-only signal) must be
+  disclosed as post hoc for both datasets.
+
+## STEP 13 offline analysis (2026-10-08, no GPU; from results_13 _scores.json, 3936 test records)
+- Registration fitness is ~0.99-1.00 in every category (losing ones included): at the coarse 0.05 voxel threshold it is
+  saturated and cannot tell good from bad alignment. Spearman(loc-glob diff, fitness) = +0.16 (p 0.34) - uninformative.
+- The loss comes from NORMAL samples: in the losing categories, normal test objects get local scores 2-6x their global
+  score (cap3 positive9: loc p99 139 vs glob 23), while their global score is normal. Per category, the median
+  loc/glob ratio on normal samples predicts the loss: Spearman -0.52 (p 0.0006, 40 categories; descriptive, uses test
+  normals, so it cannot be a selection rule).
+- NOT random registration failure: the same normal file gets the same high ratio in all three seeds (cap3 positive9:
+  6.0 / 5.5 / 5.8; seed-instability vs loss Spearman -0.26, p 0.11). So it is systematic: either (a) a consistent wrong pose
+  that the coarse fitness cannot see (near-symmetric caps/vases with one asymmetric part), or (b) real normal variation in
+  where a shape sits, which global memory tolerates and location-aware memory does not.
+- To separate (a) from (b): fine alignment residual (e.g. median nearest-neighbour distance to the merged prototypes at
+  full resolution) for each normal test sample vs its loc/glob ratio, on cap3, cap5, vase0 + 3 control categories.
+
+## Literature re-check (2026-10-08)
+- Anomaly-ShapeNet: SeDiR (CVPR 2026, "A Semantically Disentangled Unified Model for Multi-category 3D Anomaly
+  Detection", Kim et al.; trained, unified multi-category) reports O-AUROC 93.3 on Anomaly-ShapeNet and 81.0 on
+  Real3D-AD. => on Anomaly-ShapeNet the best known number is >= 93.3, not PASDF 90.0. We are NOT SOTA there.
+  Its table also lists PO3AD (CVPR 2025) 76.5 Real3D / 83.9 ShapeNet, MC3D-AD 78.2 Real3D.
+- Real3D-AD: no peer-reviewed number above Template3D-AD 84.4 found. NOT yet read (numbers unknown): AT3D-AD (arXiv
+  2609.25930, page rate-limited), "Hierarchical Point-Patch Fusion with Adaptive Patch Codebook" (CVPR 2026, arXiv
+  2604.03972, abstract gives only relative gains), MDPI MAKE 8(7):206 2026 "Alignment-Aware ... Adversarial
+  Normalizing Flows" (site down). Check these three before claiming Real3D-AD SOTA in the thesis.
+
+## STEP 14 (prepared): alignment diagnostic, scripts/diag_align.py (method.py now keeps _proto_frames; no behaviour change)

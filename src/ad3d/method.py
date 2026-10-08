@@ -260,6 +260,7 @@ class Simple3DLite:
                 r_n = (r - self._ref_center) / self._ref_scale
                 T, _ = self._reg_target.align(r_n)
                 proto_frames.append(_transform(r_n, T))
+            self._proto_frames = proto_frames      # kept for diagnostics (scripts/diag_align.py)
             # denser registration target: the merged aligned prototypes
             self._reg_target = RegistrationTarget(
                 np.concatenate(proto_frames), voxel=vox)
