@@ -567,3 +567,13 @@ qualitative maps, compute profile).
   NOT a plausible source, its fit >= 1.5x worse than the best; else excluded) + full assignment log. Real3D-AD dev k = 6/10
   are re-run with the fixed code (session 2), together with k = 20/40 and MVTec 3D-AD (16d moved first).
 - select_config.py now reports a bootstrap 95 % CI (category-fold units) of every option's difference to the best.
+
+### STEP 16 session 2 (2026-10-22/23): MVTec dev (k = 10/6/20/40, 4-7 min each) + Real3D-AD dev (81/79/87/99 min), fixed assignment rule
+Files: results_and_summary/results/step16_s2/. Selection (MVTec + Real3D-AD, equal weight; Anomaly-ShapeNet still missing):
+- scale (loc10/p99): k=6 70.4, k=10 72.6, **k=20 76.0**, k=40 71.8. Real3D-AD alone ties k=10 and 20 (76.5); MVTec decides (75.6 vs 68.6).
+- rule at k=20 (p99): **hyb 77.2**, loc10 76.0 (-1.2 [-3.5, +0.9]), loc15 75.9, knn256 75.2, cal10 73.2, glob_full 70.9 (-6.3 [-10.5, -2.1]), glob_cs 70.1. hyb best on both datasets.
+- views (loc10, after the V01 alias fix): V0 74.9, **V01 76.1**, V02 74.6, M2 75.0, V012 76.0 -> real GLFM scans NOT selected.
+- pooling (hyb): **top1pct 78.4**, max 77.8, p99 77.2, p95 73.7, mean 71.2 (unstable: Real3D alone -> max, MVTec alone -> p95).
+- MHR: no h1_hyb channel -> kept at H = 6 (pre-registered fallback).
+Provisional: {k 20, hyb, V01, top1pct, H 6}. Real-scan owners still change between folds for most categories (see protocol_audit).
+Next (session 3): MVTec dev with 24 held-out goods + Anomaly-ShapeNet dev (16d, 16c); then offline selection over all three.

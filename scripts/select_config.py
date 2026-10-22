@@ -48,8 +48,21 @@ def load(paths):
         k = d["config"]["max_nn"]
         ds = d["config"]["dataset"]
         for unit, recs in d["records"].items():
+            alias_missing_views(recs)
             out[k][ds][unit] = recs
     return out
+
+
+def alias_missing_views(recs):
+    """channels.memory_masks drops a view subset that equals the full memory (e.g. V01 on a benchmark without real
+    single-view scans: complete + simulated IS the whole memory). Its channel is then identical to the full-memory
+    channel, so it is filled in from there instead of being treated as missing."""
+    for r in recs:
+        for fam in ("loc10", "glob_full"):
+            for v in VIEWS[:-1]:
+                for p in POOL:
+                    if f"{fam}_{v}_{p}" not in r and f"{fam}_{p}" in r:
+                        r[f"{fam}_{v}_{p}"] = r[f"{fam}_{p}"]
 
 
 def unit_values(data_k, key):
