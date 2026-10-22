@@ -327,6 +327,8 @@ class Simple3DLite:
             ftargets = [RegistrationTarget(f, voxel=self._align_voxel_used or 0.05) for f in frames] \
                 if self.cfg.align == "icp" else []
             assigned = []
+            self._assign_log = []
+            n_real_mem = 0
             for path, c in cut_list:
                 h = int(hashlib.md5(path.encode()).hexdigest()[:8], 16)
                 if self.cfg.align == "icp" and self._reg_target is not None:
@@ -361,15 +363,33 @@ class Simple3DLite:
                 if os.environ.get("AD3D_DEBUG_ASSIGN"):
                     print("    [assign]", os.path.basename(path), np.round(fit_rmse, 4).tolist(), "->", owner)
                 assigned.append(owner)
-                if self._holdout_raw is not None and (owner == self.cfg.holdout or owner <= -100):
-                    if owner == self.cfg.holdout:          # dev protocol: the held-out object's scans become pseudo-tests;
+                rm = np.asarray(fit_rmse, float)
+                fin = np.isfinite(rm)
+                srt = np.sort(rm[fin]) if fin.any() else np.array([np.inf])
+                ratio = float(srt[1] / srt[0]) if len(srt) > 1 and srt[0] > 0 else float("inf")
+                self._assign_log.append({"scan": os.path.basename(path), "rmse": [float(x) for x in rm],
+                                         "frames": list(frame_ids), "owner": int(owner), "ratio_2nd_best": ratio})
+                if self._holdout_raw is not None:
+                    # dev protocol, conservative against leakage: a scan is a pseudo-test of the held-out object only if
+                    # the held-out object fits it clearly best (2nd best >= 1.5 x worse); it enters the memory only if
+                    # the held-out object is NOT a plausible source (its fit >= 1.5 x worse than the best). Everything
+                    # in between, and every scan of unknown source, is left out of both.
+                    hi = frame_ids.index(self.cfg.holdout) if self.cfg.holdout in frame_ids else None
+                    r_h = rm[hi] if hi is not None else np.inf
+                    best = srt[0]
+                    if owner == self.cfg.holdout and ratio >= 1.5:
                         self._holdout_cuts.append((path, np.asarray(c, np.float32)))
-                    continue                               # scans of unknown source are left out (no leakage)
+                        continue
+                    if owner <= -100 or not (r_h >= 1.5 * best):
+                        continue
                 if pts.shape[0] >= 200:
                     self._add_to_memory(pts, vtype=2, obj=owner)
+                    n_real_mem += 1
             self.train_cut_info = {"train_cut_n": len(cut_list),
                                    "train_cut_owners": ",".join(str(a) for a in assigned),
-                                   "train_cut_unknown": int(sum(a <= -100 for a in assigned))}
+                                   "train_cut_unknown": int(sum(a <= -100 for a in assigned)),
+                                   "train_cut_assign": self._assign_log,
+                                   "train_cut_in_memory": n_real_mem}
             if cut_fits:
                 self.train_cut_info["train_cut_fit_mean"] = float(np.mean(cut_fits))
             print(f"  [train-cut] {cls}: {len(cut_list)} cut clouds"
@@ -588,13 +608,13 @@ class Simple3DLite:
                 pts0, _ = self._finalize(_transform(p_n, cands[0][0]), gt0, path_hash=h)
                 c0, ch0 = self._channels_for(pts0)
                 idx0 = knn_indices(pts0, c0, cfg.smooth_k, device=cfg.device)
-                h1 = {f"h1_{k}": ch0[k][idx0].mean(axis=1) for k in ("glob_full", "loc10", "cal10") if k in ch0}
+                h1 = {f"h1_{k}": ch0[k][idx0].mean(axis=1) for k in ("glob_full", "loc05", "loc10", "loc15", "knn64", "knn256", "cal10") if k in ch0}
             tsum["test_features_match_s"] += time.perf_counter() - t1
             t2 = time.perf_counter()
             idx = knn_indices(pts, centers, cfg.smooth_k, device=cfg.device)
             maps = {k: v[idx].mean(axis=1).astype(np.float32) for k, v in ch.items()}
             if i_sel == 0:
-                h1 = {f"h1_{k}": maps[k] for k in ("glob_full", "loc10", "cal10") if k in maps}
+                h1 = {f"h1_{k}": maps[k] for k in ("glob_full", "loc05", "loc10", "loc15", "knn64", "knn256", "cal10") if k in maps}
             maps.update(h1)
             rec = {"file": os.path.basename(s.path), "label": int(s.label), "n_points": int(len(pts)),
                    "n_anom_points": int(gt.sum()), "fitness": float(fit), "pose_idx": int(i_sel),

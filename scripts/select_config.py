@@ -52,6 +52,31 @@ def load(paths):
     return out
 
 
+def unit_values(data_k, key):
+    """{dataset: {unit: AUROC}} for one channel key."""
+    out = {}
+    for ds, units in data_k.items():
+        out[ds] = {u: auroc([r["label"] for r in recs], [r[key] for r in recs]) for u, recs in units.items()
+                   if all(key in r for r in recs)}
+    return out
+
+
+def boot_diff(data_k, key_a, key_b, B=2000, seed=0):
+    """95 % CI of score(key_a) - score(key_b), resampling category-fold units within each dataset."""
+    ua, ub = unit_values(data_k, key_a), unit_values(data_k, key_b)
+    rng = np.random.default_rng(seed)
+    ds_list = [ds for ds in ua if ds in ub]
+    diffs = np.empty(B)
+    for b in range(B):
+        per = []
+        for ds in ds_list:
+            units = [u for u in ua[ds] if u in ub[ds] and ua[ds][u] == ua[ds][u] and ub[ds][u] == ub[ds][u]]
+            pick_ = rng.choice(len(units), len(units))
+            per.append(np.mean([ua[ds][units[i]] - ub[ds][units[i]] for i in pick_]) * 100)
+        diffs[b] = np.mean(per)
+    return np.percentile(diffs, 2.5), np.percentile(diffs, 97.5)
+
+
 def score(data_k, key):
     """mean over datasets of (mean over category-folds of the AUROC of `key`)."""
     per_ds = {}
@@ -83,13 +108,23 @@ def main():
          f"Development files: {len(a.files)}; scales: {sorted(data)}; datasets: "
          f"{sorted({ds for k in data for ds in data[k]})}. Tie margin {TIE} AUROC points -> simpler option.\n"]
 
-    def table(title, rows):
+    def table(title, rows, keys=None, dk=None):
+        """keys: channel key per row (same order) -> adds the bootstrap CI of (row - best row)."""
         dss = sorted({ds for _, _, pd in rows for ds in pd})
         L.append(f"\n## {title}\n")
-        L.append("| option | mean | " + " | ".join(dss) + " |")
-        L.append("|---|---|" + "---|" * len(dss))
-        for n, v, pd in rows:
-            L.append(f"| {n} | {v:.2f} | " + " | ".join(f"{pd.get(d, float('nan')):.2f}" for d in dss) + " |")
+        ci_col = keys is not None and dk is not None
+        L.append("| option | mean | " + " | ".join(dss) + (" | diff to best, 95 % CI |" if ci_col else " |"))
+        L.append("|---|---|" + "---|" * len(dss) + ("---|" if ci_col else ""))
+        ib = int(np.nanargmax([v for _, v, _ in rows]))
+        for i, (n, v, pd) in enumerate(rows):
+            line = f"| {n} | {v:.2f} | " + " | ".join(f"{pd.get(d, float('nan')):.2f}" for d in dss) + " |"
+            if ci_col:
+                if i == ib:
+                    line += " best |"
+                else:
+                    lo, hi = boot_diff(dk, keys[i], keys[ib])
+                    line += f" {v - rows[ib][1]:+.2f} [{lo:+.2f}, {hi:+.2f}] |"
+            L.append(line)
 
     # 1. scale
     rows = [(f"k={k}", *score(data[k], "loc10_p99")) for k in sorted(data)]
@@ -98,21 +133,22 @@ def main():
     dk = data[k_sel]
     # 2. rule
     rows = [(r, *score(dk, f"{r}_p99")) for r in RULES]
-    table(f"2. Matching rule (k={k_sel}, pooling p99)", rows)
+    table(f"2. Matching rule (k={k_sel}, pooling p99)", rows, [f"{r}_p99" for r in RULES], dk)
     rule = pick([(n, v) for n, v, _ in rows])
     # 3. views (only for loc10 / glob_full families)
     fam = "glob_full" if rule.startswith("glob") else "loc10"
-    rows = [(v, *score(dk, f"{fam}_{v}_p99" if v != "V012" else f"{fam}_p99")) for v in VIEWS]
-    table(f"3. Training views (rule family {fam}, pooling p99)", rows)
+    vkeys = [f"{fam}_{v}_p99" if v != "V012" else f"{fam}_p99" for v in VIEWS]
+    rows = [(v, *score(dk, k_)) for v, k_ in zip(VIEWS, vkeys)]
+    table(f"3. Training views (rule family {fam}, pooling p99)", rows, vkeys, dk)
     views = pick([(n, v) for n, v, _ in rows])
     # 4. pooling
     rows = [(p, *score(dk, f"{rule}_{p}")) for p in POOL]
-    table(f"4. Object-score pooling (rule {rule})", rows)
+    table(f"4. Object-score pooling (rule {rule})", rows, [f"{rule}_{p}" for p in POOL], dk)
     pool = pick([(n, v) for n, v, _ in rows])
     # 5. MHR
-    if rule in ("loc10", "cal10", "glob_full"):
+    if rule in ("glob_full", "loc05", "loc10", "loc15", "knn64", "knn256", "cal10"):
         rows = [("single pose (h1)", *score(dk, f"h1_{rule}_{pool}")), ("multi-hypothesis", *score(dk, f"{rule}_{pool}"))]
-        table(f"5. Pose hypotheses (rule {rule}, pooling {pool})", rows)
+        table(f"5. Pose hypotheses (rule {rule}, pooling {pool})", rows, [f"h1_{rule}_{pool}", f"{rule}_{pool}"], dk)
         mhr = pick([(n, v) for n, v, _ in rows]) == "multi-hypothesis"
     else:
         mhr = True

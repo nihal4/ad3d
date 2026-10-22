@@ -1,0 +1,7 @@
+{
+  "max_nn": 10,
+  "rule": "loc05",
+  "views": "V02",
+  "pooling": "max",
+  "mhr": true
+}

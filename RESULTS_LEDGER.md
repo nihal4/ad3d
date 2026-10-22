@@ -556,3 +556,14 @@ qualitative maps, compute profile).
   EXTRA, TAGSUF, FINAL).
 - Template3D-AD code exists (github.com/CaedmonLY/Template3D-AD) -> reproduction planned (step 19).
 ### Notebook: STEP 16 (16a Real3D-AD k=10,6; 16b k=20,40; 16c Anomaly-ShapeNet; 16d MVTec; 16e selection; 16f zip).
+### STEP 16 session 1 (2026-10-22): Real3D-AD development runs k = 10, 6 (82 / 80 min) - superseded, see below
+- Dev (normal-only) O-AUROC, loc10/p99: k = 10 73.4 > k = 6 70.3. Rules at k = 10 (p99): knn64 75.3, loc05 74.9, knn256 74.8,
+  loc10 73.4, cal10 72.4, glob_cs 65.5, glob_full 64.8 -> location-aware >> global (+8 to +10, CI excludes 0) also WITHOUT
+  test labels. Pooling: max 78.6 > top1pct 77.4 > p99 74.9 (max - p99 = +3.6, CI [+1.8, +5.4]) -> the post-hoc
+  "max beats p99 with location-aware memory" is confirmed by the normal-only protocol.
+- PROBLEM: assignment of GLFM real scans to their prototype is not stable across folds (e.g. car, diamond, starfish), so a
+  held-out object's own scans may have stayed in memory (leakage risk for the views decision). Fix: conservative rule
+  (pseudo-test only if the held-out object fits clearly best, 2nd best >= 1.5x worse; memory only if the held-out object is
+  NOT a plausible source, its fit >= 1.5x worse than the best; else excluded) + full assignment log. Real3D-AD dev k = 6/10
+  are re-run with the fixed code (session 2), together with k = 20/40 and MVTec 3D-AD (16d moved first).
+- select_config.py now reports a bootstrap 95 % CI (category-fold units) of every option's difference to the best.
