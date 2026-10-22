@@ -299,8 +299,10 @@ class RegistrationTarget:
         """
         src = self._res_src(source_pts)
         best_i, best_res = 0, None
+        self.last_residuals = []                 # kept for registration diagnostics (no effect on the choice)
         for i, (T, _f) in enumerate(candidates):
             res = self._trimmed_residual(src, T)
+            self.last_residuals.append(res)
             if best_res is None or res < best_res:
                 best_i, best_res = i, res
         return best_i, candidates[best_i]

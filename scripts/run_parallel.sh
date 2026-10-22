@@ -59,8 +59,24 @@ declare -A CFG=(
   [mhr6-nn20]="--align icp --cuts 4 --align-poses 6 --max-nn 20"
   [icp-cuts4-nn40]="--align icp --cuts 4 --max-nn 40"
   [mhr6-nn40]="--align icp --cuts 4 --align-poses 6 --max-nn 40"
+  # ---- revision (2026-10): every decision rule from one run (--channels rev); `-nocut` = datasets without real scans
+  [rev-nn6]="--align icp --cuts 4 --align-poses 6 --max-nn 6 --train-cut-root ${CUT_ROOT} --train-cut-with-protos --obj-rule p99 --local-mem 0.10 --channels rev"
+  [rev-nn10]="--align icp --cuts 4 --align-poses 6 --max-nn 10 --train-cut-root ${CUT_ROOT} --train-cut-with-protos --obj-rule p99 --local-mem 0.10 --channels rev"
+  [rev-nn20]="--align icp --cuts 4 --align-poses 6 --max-nn 20 --train-cut-root ${CUT_ROOT} --train-cut-with-protos --obj-rule p99 --local-mem 0.10 --channels rev"
+  [rev-nn40]="--align icp --cuts 4 --align-poses 6 --max-nn 40 --train-cut-root ${CUT_ROOT} --train-cut-with-protos --obj-rule p99 --local-mem 0.10 --channels rev"
+  [rev-nocut-nn6]="--align icp --cuts 4 --align-poses 6 --max-nn 6 --obj-rule p99 --local-mem 0.10 --channels rev"
+  [rev-nocut-nn10]="--align icp --cuts 4 --align-poses 6 --max-nn 10 --obj-rule p99 --local-mem 0.10 --channels rev"
+  [rev-nocut-nn20]="--align icp --cuts 4 --align-poses 6 --max-nn 20 --obj-rule p99 --local-mem 0.10 --channels rev"
+  [rev-nocut-nn40]="--align icp --cuts 4 --align-poses 6 --max-nn 40 --obj-rule p99 --local-mem 0.10 --channels rev"
 )
-for _c in ${CONFIGS:-}; do case "$_c" in cut-*|*pluscut*) [ -z "$CUT_ROOT" ] && { echo "[!] config $_c needs CUT_ROOT=<folder with <cls>/train_cut>"; exit 1; };; esac; done
+# FINAL=<json from scripts/select_config.py> adds the frozen configuration as config name "final" (see final_args.py)
+if [ -n "${FINAL:-}" ]; then CFG[final]="$(python scripts/final_args.py "$FINAL" --dataset "${DATASET:-real3d}" --cut-root "${CUT_ROOT}")"; fi
+# RUNNER=dev runs the normal-only development protocol (scripts/dev_protocol.py) instead of run.py;
+# DEV_ARGS (e.g. "--n-pseudo 6 --folds 4") and EXTRA (any further run.py flags, e.g. "--test-crop 0.5") are appended;
+# TAGSUF is appended to the tag of every job (e.g. "-crop50").
+RUNPY="run.py"; [ "${RUNNER:-}" = "dev" ] && RUNPY="scripts/dev_protocol.py ${DEV_ARGS:-}"
+EXTRA="${EXTRA:-}"; TAGSUF="${TAGSUF:-}"
+for _c in ${CONFIGS:-}; do case "$_c" in cut-*|*pluscut*|rev-nn*) [ -z "$CUT_ROOT" ] && { echo "[!] config $_c needs CUT_ROOT=<folder with <cls>/train_cut>"; exit 1; };; esac; done
 CONFIGS="${CONFIGS:-base icp-cuts4 mhr6}"
 DATASET="${DATASET:-real3d}"
 mkdir -p logs results/parts
@@ -73,18 +89,20 @@ if [ "${SPLIT:-0}" = "1" ]; then
   PARTIAL=""
   if [ -n "${CLASSES:-}" ]; then IFS=',' read -r -a CATS <<< "$CLASSES"; PARTIAL="--allow-partial"; fi   # category subset (screening)
   for name in $CONFIGS; do for s in $SEEDS; do
-    t0=$(date +%s); echo "[timing] ${name} seed ${s} start $(date '+%F %T')" | tee -a logs/timing.log
+    t0=$(date +%s); echo "[timing] ${name}${TAGSUF} seed ${s} start $(date '+%F %T')" | tee -a logs/timing.log
     pids=()
     for g in $(seq 0 $((NGPU-1))); do
       list=""; for i in "${!CATS[@]}"; do [ $((i % NGPU)) -eq "$g" ] && list="${list:+$list,}${CATS[$i]}"; done
-      CUDA_VISIBLE_DEVICES=$g OMP_NUM_THREADS=$THREADS python run.py --dataset "$DATASET" \
-        --data-root "$ROOT" ${CFG[$name]} --seed "$s" --classes "$list" \
-        --out results/parts --tag "${name}-s${s}-part${g}" > "logs/${name}-s${s}-part${g}.log" 2>&1 &
+      CUDA_VISIBLE_DEVICES=$g OMP_NUM_THREADS=$THREADS python $RUNPY --dataset "$DATASET" \
+        --data-root "$ROOT" ${CFG[$name]} $EXTRA --seed "$s" --classes "$list" \
+        --out results/parts --tag "${name}${TAGSUF}-s${s}-part${g}" > "logs/${name}${TAGSUF}-s${s}-part${g}.log" 2>&1 &
       pids+=($!)
     done
     for p in "${pids[@]}"; do wait "$p"; done
-    python scripts/merge_categories.py --dataset "$DATASET" $PARTIAL "${name}-s${s}" results/parts/${name}-s${s}-part*_${DATASET}_*[0-9].csv
-    echo "[timing] ${name} seed ${s} ${DATASET} wall-clock $(( ($(date +%s) - t0) / 60 )) min" | tee -a logs/timing.log
+    if [ "${RUNNER:-}" != "dev" ]; then
+      python scripts/merge_categories.py --dataset "$DATASET" $PARTIAL "${name}${TAGSUF}-s${s}" results/parts/${name}${TAGSUF}-s${s}-part*_${DATASET}_*[0-9].csv
+    fi
+    echo "[timing] ${name}${TAGSUF} seed ${s} ${DATASET} wall-clock $(( ($(date +%s) - t0) / 60 )) min" | tee -a logs/timing.log
   done; done
   exit 0
 fi

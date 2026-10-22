@@ -27,9 +27,9 @@ from ad3d import get_classes  # noqa: E402
 from ad3d.method import Config, run_benchmark  # noqa: E402
 
 
-def parse_args() -> argparse.Namespace:
+def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="ad3d benchmark runner")
-    p.add_argument("--dataset", required=True, choices=["shapenet", "real3d"])
+    p.add_argument("--dataset", required=True, choices=["shapenet", "real3d", "mvtec"])
     p.add_argument("--data-root", required=True,
                    help="shapenet: path to the `pcd` dir | real3d: dir with 12 category folders")
     p.add_argument("--classes", default=None,
@@ -75,14 +75,24 @@ def parse_args() -> argparse.Namespace:
                    help="train on pre-cut single-view clouds <root>/<cls>/train_cut/* instead of the 360-degree prototypes")
     p.add_argument("--train-cut-with-protos", action="store_true",
                    help="with --train-cut-root: also keep the full prototypes in the memory bank")
+    p.add_argument("--channels", default="", choices=["", "rev"],
+                   help="rev = revision experiments: all decision rules / memory subsets from one run (channels.py)")
+    p.add_argument("--save-maps", default="", help="directory for point clouds + score maps of a fixed sample subset")
+    p.add_argument("--n-protos", type=int, default=0, help="use only the first n prototypes (0 = all)")
+    p.add_argument("--test-noise", type=float, default=0.0)
+    p.add_argument("--test-density", type=float, default=1.0)
+    p.add_argument("--test-crop", type=float, default=1.0)
     p.add_argument("--device", default="auto")
     p.add_argument("--seed", type=int, default=0)
-    return p.parse_args()
+    return p
 
 
-def main():
-    args = parse_args()
-    cfg = Config(
+def parse_args() -> argparse.Namespace:
+    return build_parser().parse_args()
+
+
+def config_from_args(args) -> Config:
+    return Config(
         data_root=args.data_root,
         dataset=args.dataset,
         max_nn=args.max_nn,
@@ -104,9 +114,18 @@ def main():
         local_mem=args.local_mem, local_radii=tuple(float(x) for x in args.local_radii.split(",") if x),
         train_cut_root=args.train_cut_root,
         train_cut_with_protos=args.train_cut_with_protos,
+        channels=args.channels, save_maps=args.save_maps, n_protos=args.n_protos,
+        test_noise=args.test_noise, test_density=args.test_density, test_crop=args.test_crop,
         device=args.device,
         seed=args.seed,
     )
+
+
+
+
+def main():
+    args = parse_args()
+    cfg = config_from_args(args)
     classes = args.classes.split(",") if args.classes else get_classes(args.dataset)
 
     # resolve 'auto' now so the log shows the real device being used

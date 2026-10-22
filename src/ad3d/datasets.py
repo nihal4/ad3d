@@ -52,12 +52,21 @@ REAL3D_CLASSES = [
 ]
 
 
+MVTEC_CLASSES = [
+    "bagel", "cable_gland", "carrot", "cookie", "dowel", "foam", "peach", "potato", "rope", "tire",
+]
+
+N_PROTOS_MVTEC = 4          # few-shot setting: the first 4 (sorted) training goods are the prototypes
+
+
 def get_classes(dataset: str) -> list[str]:
     if dataset == "shapenet":
         return list(SHAPENET_CLASSES)
     if dataset == "real3d":
         return list(REAL3D_CLASSES)
-    raise ValueError(f"Unknown dataset '{dataset}' (use 'shapenet' or 'real3d')")
+    if dataset == "mvtec":
+        return list(MVTEC_CLASSES)
+    raise ValueError(f"Unknown dataset '{dataset}' (use 'shapenet', 'real3d' or 'mvtec')")
 
 
 # --------------------------------------------------------------------------- #
@@ -104,6 +113,9 @@ def read_txt_cloud(path: str) -> tuple[np.ndarray, np.ndarray]:
 # --------------------------------------------------------------------------- #
 def load_train(root: str, dataset: str, cls: str) -> list[np.ndarray]:
     """Return the list of raw training (normal) point clouds for one category."""
+    if dataset == "mvtec":
+        paths = mvtec_train_paths(root, cls)[:N_PROTOS_MVTEC]
+        return [read_mvtec_xyz(p)[0] for p in paths]
     if dataset == "shapenet":
         paths = sorted(glob.glob(os.path.join(root, cls, "train", "*.pcd")))
     elif dataset == "real3d":
@@ -206,9 +218,94 @@ def load_test(root: str, dataset: str, cls: str) -> list[TestSample]:
                 txt = os.path.join(gt_dir, stem + ".txt")
                 pts, gt = read_txt_cloud(txt)
                 samples.append(TestSample(pts, gt, 1, p))
+    elif dataset == "mvtec":
+        for tdir in sorted(glob.glob(os.path.join(root, cls, "test", "*"))):
+            kind = os.path.basename(tdir)
+            for p in sorted(glob.glob(os.path.join(tdir, "xyz", "*.tif*"))):
+                pts, pix, shape = read_mvtec_xyz(p, return_shape=True)
+                if kind == "good":
+                    gt = np.zeros(len(pts), np.float32)
+                else:
+                    stem = os.path.splitext(os.path.basename(p))[0]
+                    m = _read_mask(os.path.join(tdir, "gt", stem + ".png"), shape)
+                    gt = (m.reshape(-1)[pix] > 0).astype(np.float32)
+                samples.append(TestSample(pts, gt, int(kind != "good"), p))
     else:
         raise ValueError(dataset)
 
     if not samples:
         raise FileNotFoundError(f"No test samples found for {cls} under {root}")
     return samples
+
+
+# --------------------------------------------------------------------------- #
+# MVTec 3D-AD (point clouds only: the organised xyz.tiff, RGB is never read)
+# --------------------------------------------------------------------------- #
+def mvtec_train_paths(root: str, cls: str) -> list[str]:
+    paths = sorted(glob.glob(os.path.join(root, cls, "train", "good", "xyz", "*.tif*")))
+    if not paths:
+        raise FileNotFoundError(f"No MVTec 3D-AD training xyz under {os.path.join(root, cls, 'train', 'good', 'xyz')}")
+    return paths
+
+
+def load_train_extra(root: str, dataset: str, cls: str, start: int, n: int) -> list[np.ndarray]:
+    """Further NORMAL training samples beyond the prototypes (MVTec 3D-AD only; used by the normal-only
+    development protocol as held-out normals, never as memory)."""
+    if dataset != "mvtec":
+        raise ValueError("extra training normals exist only for MVTec 3D-AD")
+    return [read_mvtec_xyz(p)[0] for p in mvtec_train_paths(root, cls)[start:start + n]]
+
+
+def _read_mask(path: str, shape) -> np.ndarray:
+    from PIL import Image
+    m = np.asarray(Image.open(path).convert("L"))
+    if m.shape != tuple(shape):
+        m = np.asarray(Image.open(path).convert("L").resize((shape[1], shape[0]), Image.NEAREST))
+    return m
+
+
+def read_mvtec_xyz(path: str, border: int = 10, return_shape: bool = False):
+    """Organised MVTec 3D-AD point cloud -> foreground points + their flat pixel indices.
+
+    Background removal (data-independent rule, the usual one for this benchmark): fit a plane by RANSAC to the valid
+    points of the image border (`border` pixels wide), which show only the support surface, and drop every point
+    closer to that plane than max(3 x the border points' median plane residual, 0.25 % of the cloud's extent);
+    finally drop small connected components (DBSCAN; < 5 % of the largest) to remove stray points."""
+    import tifffile
+    a = np.asarray(tifffile.imread(path), dtype=np.float32)
+    H, W = a.shape[:2]
+    flat = a.reshape(-1, a.shape[-1])[:, :3]
+    valid = np.isfinite(flat).all(axis=1) & np.any(flat != 0, axis=1)
+    yy, xx = np.divmod(np.arange(H * W), W)
+    on_border = (yy < border) | (yy >= H - border) | (xx < border) | (xx >= W - border)
+    bpts = flat[valid & on_border]
+    pix = np.where(valid)[0]
+    pts = flat[pix]
+    if len(bpts) >= 100:
+        pc = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(bpts.astype(np.float64)))
+        extent = float(np.linalg.norm(pts.max(0) - pts.min(0))) or 1.0
+        (a_, b_, c_, d_), _ = pc.segment_plane(distance_threshold=0.002 * extent, ransac_n=3, num_iterations=1000)
+        nrm = np.linalg.norm([a_, b_, c_]) or 1.0
+        res_b = np.abs(bpts @ np.array([a_, b_, c_]) + d_) / nrm
+        thr = max(3.0 * float(np.median(res_b)), 0.0025 * extent)
+        dist = np.abs(pts @ np.array([a_, b_, c_]) + d_) / nrm
+        keep = dist > thr
+        pts, pix = pts[keep], pix[keep]
+    if len(pts) > 50:
+        from scipy.spatial import cKDTree
+        extent = float(np.linalg.norm(pts.max(0) - pts.min(0))) or 1.0
+        rng = np.random.default_rng(0)
+        sub = np.sort(rng.choice(len(pts), min(20_000, len(pts)), replace=False))
+        pc = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(pts[sub].astype(np.float64)))
+        lab_s = np.asarray(pc.cluster_dbscan(eps=0.03 * extent, min_points=5))
+        if (lab_s >= 0).any():
+            _, nn = cKDTree(pts[sub]).query(pts, k=1)
+            lab = lab_s[nn]
+            cnt = np.bincount(lab[lab >= 0])
+            keep_lab = np.where(cnt >= 0.05 * cnt.max())[0]      # main object + any sizeable part of it
+            keep = np.isin(lab, keep_lab)
+            pts, pix = pts[keep], pix[keep]
+    if len(pts) == 0:
+        raise ValueError(f"Empty point cloud after background removal: {path}")
+    pts = pts.astype(np.float32)
+    return (pts, pix, (H, W)) if return_shape else (pts, pix)

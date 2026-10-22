@@ -527,3 +527,32 @@ Files: results_and_summary/results/step15/ (merged CSVs, parts incl. _scores.jso
 - 2026-10-09: conclusion.tex and introduction.tex drafted; all six sections now in main.tex (21 pages). Missing: title, authors, abstract.
 - 2026-10-09: introduction expanded (~1,300 words, 9 paragraphs + contributions) with teaser Fig. 1 (figures/results/teaser.pdf: global vs location-aware illustration + Real3D-AD comparison). Paper 22 pages.
 - 2026-10-09: reviewer/editor pass applied (terminology, symbols S/K_s, eqref and Fig./Sec. convention, RQs moved to Introduction, zero-shot merged into gap, notation table, p99 justification aligned with ablation, bib fixes + Arun 1987, DOIs hidden as xdoi, overview figure inset replaced by fallback bank).
+
+## REVISION (2026-10-22): supervisor's expert review -> major revision, target Advanced Engineering Informatics (alt. IEEE TIM)
+Decisions with the user: > 6 weeks available; leakage fix = normal-only development protocol + fresh third benchmark
+(MVTec 3D-AD, point clouds only); everything else in the review (controls, statistics, calibration, robustness, baselines,
+qualitative maps, compute profile).
+### Stage 0 (offline, no GPU) - results_and_summary/results/stats/{real3d_full,shapenet_full}/summary.md
+- Paired stratified bootstrap (B = 2000, test objects resampled within category, same resample for both rules and all seeds):
+  Real3D-AD loc10 - glob = +5.03 [+3.03, +7.03] (p < 0.001); 7/12 categories CI > 0, 0 < 0.
+  Anomaly-ShapeNet: -2.79 [-4.31, -1.18]; 3/40 CI > 0, 10/40 CI < 0.
+- FPR on normals at 95 % TPR: Real3D-AD loc10 34.1 % vs global 59.4 %; Anomaly-ShapeNet 46.5 % vs 51.9 %.
+- Defect-size tertiles (anomalous-point fraction): Real3D-AD loc10 83.1 / 87.2 / 91.6 vs global 72.3 / 82.9 / 93.3 ->
+  the location-aware gain comes from SMALL defects (+10.8); large defects are slightly better with global matching.
+  Anomaly-ShapeNet: loc10 76.5 / 91.5 / 91.1 vs global 78.5 / 93.7 / 94.7 (global better in every stratum).
+- Parameter-provenance audit: paper/revision/protocol_audit.md (k, registration voxel, M/tau, H, real scans, p99 were
+  test-informed; rho was pre-registered; Anomaly-ShapeNet was held out).
+### Stage 1 code (tests/revision_smoke_test.py passes; legacy smoke test unchanged; legacy loc10 == rev loc10 exactly)
+- localmem.py: per-entry metadata (view type, object, view, cut index); global-full (no coreset) distances; normal-only
+  leave-one-object-out reference per entry. channels.py: ~40 rules from one feature pass (glob_cs, glob_full, loc05/10/15,
+  knn64/256, soft0p5/1/2, cal10/cal10_k0, hyb, view subsets V0/V01/V02/M2 (+ _eq memory-budget-matched), h1_ single-pose).
+- method.py `--channels rev`: registration diagnostics (reg_res, reg_res_T0, n_hyp, pose_idx), timing per stage, peak
+  RAM/GPU, map saving for a fixed rule (first 2 anomalous + first normal per category), robustness options
+  (--n-protos, --test-crop, --test-density, --test-noise); real scans assigned to their prototype by per-prototype
+  registration + ICP (unknown source -> own object id, excluded in dev folds).
+- datasets.py: MVTec 3D-AD loader (xyz.tiff, border-plane RANSAC background removal, DBSCAN clean-up, mask -> points).
+- scripts/dev_protocol.py (normal-only dev runs), scripts/select_config.py (fixed decision order, tie -> simpler),
+  scripts/final_args.py (selection -> run flags), scripts/stats_offline.py, run_parallel.sh (rev-* configs, RUNNER=dev,
+  EXTRA, TAGSUF, FINAL).
+- Template3D-AD code exists (github.com/CaedmonLY/Template3D-AD) -> reproduction planned (step 19).
+### Notebook: STEP 16 (16a Real3D-AD k=10,6; 16b k=20,40; 16c Anomaly-ShapeNet; 16d MVTec; 16e selection; 16f zip).

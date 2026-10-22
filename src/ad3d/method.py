@@ -17,6 +17,8 @@ from __future__ import annotations
 
 import hashlib
 import os
+import resource
+import time
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -26,7 +28,7 @@ from . import datasets as D
 from .features import RegistrationTarget, compute_fpfh_ms, lfsa
 from .memory import MemoryBank
 from .metrics import compute_metrics
-from .scoring import object_score, object_score_rule, object_score_stats, point_scores
+from .scoring import object_score, object_score_rule, object_score_stats, point_scores  # noqa: F401
 
 
 @dataclass
@@ -68,6 +70,14 @@ class Config:
     # location-aware memory (needs align='icp'); see localmem.py. 0 = off (global memory only)
     local_mem: float = 0.0             # PRIMARY radius rho (unit-normalised frame); e.g. 0.10
     local_radii: tuple = (0.05, 0.10, 0.15)   # also reported from the same run (sensitivity)
+    # revision experiments (2026-10): many decision rules from one feature extraction (channels.py)
+    channels: str = ""                 # "" = original behaviour; "rev" = all revision channels + diagnostics
+    save_maps: str = ""                # directory: save point clouds + score maps of a fixed subset of test samples
+    n_protos: int = 0                  # use only the first n prototypes (0 = all) - robustness to training-set size
+    holdout: int = -1                  # normal-only dev protocol: prototype held out of memory and frame (-1 = none)
+    test_noise: float = 0.0            # robustness: Gaussian noise (std, unit-normalised frame) added to test scans
+    test_density: float = 1.0          # robustness: fraction of test points kept (random subsample)
+    test_crop: float = 1.0             # robustness: fraction of the test scan kept by a directional crop
     # misc
     device: str = "auto"
     seed: int = 0
@@ -148,11 +158,11 @@ class Simple3DLite:
                                      device=self.cfg.device)
         return centers, center_feats
 
-    def _add_to_memory(self, pts: np.ndarray) -> None:
+    def _add_to_memory(self, pts: np.ndarray, vtype: int = 0, obj: int = 0, sub: int = 0) -> None:
         centers, center_feats = self.sample_features(pts)
         self.memory.add(center_feats)
         if getattr(self, "_local", None) is not None:
-            self._local.add(centers, center_feats)
+            self._local.add(centers, center_feats, vtype=vtype, obj=obj, sub=sub)
 
     def _simulated_cuts(self, pts: np.ndarray, n_cuts: int, proto_idx: int = 0) -> int:
         """Augment the memory with simulated single-view scans of a prototype.
@@ -168,14 +178,14 @@ class Simple3DLite:
         rng = np.random.default_rng(self.cfg.seed + 1234 + off)
         dirs = pts / np.maximum(np.linalg.norm(pts, axis=1, keepdims=True), 1e-9)
         added = 0
-        for _ in range(n_cuts):
+        for l in range(n_cuts):
             u = rng.normal(size=3)
             u /= np.linalg.norm(u)
             cut = pts[dirs @ u > 0.15]
             if cut.shape[0] < 200:
                 continue
             cut_f, _ = self._finalize(cut)
-            self._add_to_memory(cut_f)
+            self._add_to_memory(cut_f, vtype=1, obj=proto_idx, sub=l)
             added += 1
         return added
 
@@ -239,7 +249,18 @@ class Simple3DLite:
                 raise ValueError("--local-mem needs --align icp (positions must live in one registered frame)")
             from .localmem import LocalMemory
             self._local = LocalMemory(device=self.cfg.device)
-        trains = D.load_train(self.cfg.data_root, self.cfg.dataset, cls)
+        self.timing = {}
+        t_fit0 = time.perf_counter()
+        trains = getattr(self, "_train_override", None) or D.load_train(self.cfg.data_root, self.cfg.dataset, cls)
+        if self.cfg.n_protos > 0:
+            trains = trains[:self.cfg.n_protos]
+        obj_ids = list(range(len(trains)))
+        self._holdout_raw = None
+        if 0 <= self.cfg.holdout < len(trains):
+            self._holdout_raw = np.asarray(trains[self.cfg.holdout], dtype=np.float64)
+            obj_ids = [i for i in obj_ids if i != self.cfg.holdout]
+            trains = [trains[i] for i in obj_ids]
+        self._obj_ids = obj_ids
 
         if self.cfg.align == "icp":
             o3d.utility.random.seed(self.cfg.seed)
@@ -261,6 +282,10 @@ class Simple3DLite:
                 T, _ = self._reg_target.align(r_n)
                 proto_frames.append(_transform(r_n, T))
             self._proto_frames = proto_frames      # kept for diagnostics (scripts/diag_align.py)
+            if self._holdout_raw is not None:      # dev protocol: held-out object registered ONLY to assign real scans
+                h_n = (self._holdout_raw - self._ref_center) / self._ref_scale
+                T_h, _ = self._reg_target.align(h_n)
+                self._holdout_frame = _transform(h_n, T_h)
             # denser registration target: the merged aligned prototypes
             self._reg_target = RegistrationTarget(
                 np.concatenate(proto_frames), voxel=vox)
@@ -276,18 +301,32 @@ class Simple3DLite:
             self._ref_center, self._reg_target, self._tol = None, None, None
             proto_frames = [self._normalize(t) for t in trains]
 
+        self.timing["fit_register_s"] = time.perf_counter() - t_fit0
+        t_mem0 = time.perf_counter()
         use_protos = (not self.cfg.train_cut_root) or self.cfg.train_cut_with_protos
         if use_protos:
-            for pi, pf in enumerate(proto_frames):
+            for pi, pf in zip(obj_ids, proto_frames):
                 pts, _ = self._finalize(pf)
-                self._add_to_memory(pts)
+                self._add_to_memory(pts, vtype=0, obj=pi)
                 if self.cfg.cuts > 0:
                     self._simulated_cuts(pts, self.cfg.cuts, proto_idx=pi)
 
         self.train_cut_info = {}
+        self._holdout_cuts = []                  # dev protocol: raw real scans of the held-out object (pseudo-test normals)
         if self.cfg.train_cut_root:
             cut_fits = []
             cut_list = D.load_train_cut(self.cfg.train_cut_root, cls)
+            frames = [np.asarray(f, np.float32) for f in proto_frames]
+            frame_ids = list(obj_ids)
+            if getattr(self, "_holdout_frame", None) is not None and self._holdout_raw is not None:
+                frames.append(np.asarray(self._holdout_frame, np.float32))
+                frame_ids.append(self.cfg.holdout)
+            from .features import to_o3d
+            reg_ = o3d.pipelines.registration
+            fpcs = [to_o3d(f).voxel_down_sample(0.01) for f in frames]
+            ftargets = [RegistrationTarget(f, voxel=self._align_voxel_used or 0.05) for f in frames] \
+                if self.cfg.align == "icp" else []
+            assigned = []
             for path, c in cut_list:
                 h = int(hashlib.md5(path.encode()).hexdigest()[:8], 16)
                 if self.cfg.align == "icp" and self._reg_target is not None:
@@ -303,9 +342,34 @@ class Simple3DLite:
                     pts, _ = self._finalize(_transform(c_n, T), path_hash=h)
                 else:
                     pts, _ = self.preprocess(c, path_hash=h)
+                # which physical object is this scan of? Refine the registered scan against each prototype separately
+                # (point-to-point ICP from the current pose) and take the one it fits best (geometry only).
+                src_pc = to_o3d(pts).voxel_down_sample(0.01)
+                fit_rmse = []
+                for fi, fpc in enumerate(fpcs):
+                    T_ = np.eye(4)
+                    if ftargets:                             # re-register the scan to THIS prototype alone first
+                        T_, _ = ftargets[fi].align(np.asarray(pts, np.float64))
+                    for thr_ in (0.10, 0.05, 0.02):          # coarse-to-fine, from the current pose
+                        r_ = reg_.registration_icp(src_pc, fpc, thr_, T_,
+                                                   reg_.TransformationEstimationPointToPoint(),
+                                                   reg_.ICPConvergenceCriteria(max_iteration=30))
+                        T_ = r_.transformation
+                    fit_rmse.append(r_.inlier_rmse if r_.fitness > 0.5 else np.inf)
+                owner = frame_ids[int(np.argmin(fit_rmse))] if np.isfinite(np.min(fit_rmse)) \
+                    else -100 - len(assigned)              # source unknown: own object id (never pooled with others)
+                if os.environ.get("AD3D_DEBUG_ASSIGN"):
+                    print("    [assign]", os.path.basename(path), np.round(fit_rmse, 4).tolist(), "->", owner)
+                assigned.append(owner)
+                if self._holdout_raw is not None and (owner == self.cfg.holdout or owner <= -100):
+                    if owner == self.cfg.holdout:          # dev protocol: the held-out object's scans become pseudo-tests;
+                        self._holdout_cuts.append((path, np.asarray(c, np.float32)))
+                    continue                               # scans of unknown source are left out (no leakage)
                 if pts.shape[0] >= 200:
-                    self._add_to_memory(pts)
-            self.train_cut_info = {"train_cut_n": len(cut_list)}
+                    self._add_to_memory(pts, vtype=2, obj=owner)
+            self.train_cut_info = {"train_cut_n": len(cut_list),
+                                   "train_cut_owners": ",".join(str(a) for a in assigned),
+                                   "train_cut_unknown": int(sum(a <= -100 for a in assigned))}
             if cut_fits:
                 self.train_cut_info["train_cut_fit_mean"] = float(np.mean(cut_fits))
             print(f"  [train-cut] {cls}: {len(cut_list)} cut clouds"
@@ -315,9 +379,18 @@ class Simple3DLite:
         if self._local is not None:
             self._local.build()
             print(f"  [local-mem] {cls}: {self._local.size} positioned descriptors", flush=True)
+            if self.cfg.channels == "rev":
+                from .channels import memory_masks
+                info = self._local.build_reference(rho=self.cfg.local_mem)
+                self._masks = memory_masks(self._local, seed=self.cfg.seed)
+                self.train_cut_info.update({k: v for k, v in info.items()})
+                self.train_cut_info.update({f"mem_{k}": int(v.sum()) for k, v in self._masks.items()})
+        self.timing["fit_memory_s"] = time.perf_counter() - t_mem0
 
-    def evaluate(self, cls: str) -> dict:
-        test = D.load_test(self.cfg.data_root, self.cfg.dataset, cls)
+    def evaluate(self, cls: str, samples: list | None = None) -> dict:
+        test = samples if samples is not None else D.load_test(self.cfg.data_root, self.cfg.dataset, cls)
+        if self.cfg.channels == "rev":
+            return self._evaluate_rev(cls, test)
         if self.cfg.align == "icp":
             o3d.utility.random.seed(self.cfg.seed + 7)
 
@@ -429,6 +502,172 @@ class Simple3DLite:
         for k, v in (self.memory.ref or {}).items():
             m[f"train_ref_{k}"] = v
         return m
+
+
+    # ------------------------------------------------------------------ #
+    # Revision path: many decision rules from one feature extraction
+    # ------------------------------------------------------------------ #
+    def _perturb(self, p_n: np.ndarray, gt: np.ndarray, h: int):
+        """Robustness perturbations of a test scan in the unit-normalised frame (all off by default).
+        Crop keeps a directional cap holding `test_crop` of the points; for an anomalous scan the cap is
+        re-drawn (up to 20 times) until at least half of its defect points stay visible, so that the
+        crop tests partial views of visible defects rather than deleting the defect."""
+        cfg = self.cfg
+        rng = np.random.default_rng(cfg.seed * 1000003 + h)
+        if cfg.test_crop < 1.0:
+            c = p_n - p_n.mean(0)
+            dirs = c / np.maximum(np.linalg.norm(c, axis=1, keepdims=True), 1e-9)
+            best = None
+            for _ in range(20):
+                u = rng.normal(size=3)
+                u /= np.linalg.norm(u)
+                proj = dirs @ u
+                thr = np.quantile(proj, 1.0 - cfg.test_crop)
+                keep = proj >= thr
+                if gt.sum() == 0 or gt[keep].sum() >= 0.5 * gt.sum():
+                    best = keep
+                    break
+                if best is None or gt[keep].sum() > gt[best].sum():
+                    best = keep
+            p_n, gt = p_n[best], gt[best]
+        if cfg.test_density < 1.0:
+            keep = rng.random(len(p_n)) < cfg.test_density
+            p_n, gt = p_n[keep], gt[keep]
+        if cfg.test_noise > 0:
+            p_n = p_n + rng.normal(scale=cfg.test_noise, size=p_n.shape)
+        return p_n, gt
+
+    def _channels_for(self, pts: np.ndarray):
+        from .channels import score_channels
+        centers, feats = self.sample_features(pts)
+        glob_cs = self.memory.min_dists(feats)
+        ch = score_channels(self._local, glob_cs, centers, feats, self._masks, rho=self.cfg.local_mem,
+                            radii=tuple(self.cfg.local_radii))
+        return centers, ch
+
+    def _evaluate_rev(self, cls: str, test: list) -> dict:
+        from .channels import KEY_CHANNELS
+        from .features import knn_indices
+        cfg = self.cfg
+        if self._local is None or cfg.align != "icp":
+            raise ValueError("channels='rev' needs --align icp and --local-mem > 0")
+        o3d.utility.random.seed(cfg.seed + 7)
+        if torch_cuda():
+            import torch
+            torch.cuda.reset_peak_memory_stats()
+        tsum = {"test_register_s": 0.0, "test_features_match_s": 0.0, "test_score_s": 0.0}
+        labels, gts = [], []
+        obj = {}            # channel -> list of object scores (main rule = cfg.obj_rule or p99)
+        pmaps = {k: [] for k in KEY_CHANNELS}
+        self.sample_records = []
+        rule = cfg.obj_rule or "p99"
+        save_left = self._maps_plan(test) if cfg.save_maps else set()
+        switched, fits = 0, []
+        for s in test:
+            h = int(hashlib.md5(s.path.encode()).hexdigest()[:8], 16)
+            t0 = time.perf_counter()
+            p_n = (np.asarray(s.points, dtype=np.float64) - self._ref_center) / self._ref_scale
+            gt0 = np.asarray(s.gt, np.float32)
+            if cfg.test_crop < 1 or cfg.test_density < 1 or cfg.test_noise > 0:
+                p_n, gt0 = self._perturb(p_n, gt0, h)
+            cands = self._reg_target.align_candidates(p_n, poses=cfg.align_poses, seed=cfg.seed)
+            res = []
+            if len(cands) > 1:
+                i_sel, (T, fit) = self._reg_target.select_pose(p_n, cands)
+                res = list(getattr(self._reg_target, "last_residuals", []))
+            else:
+                i_sel, (T, fit) = 0, cands[0]
+                res = [self._reg_target.residual(p_n, T)]
+            switched += int(i_sel != 0)
+            fits.append(fit)
+            pts, gt = self._finalize(_transform(p_n, T), gt0, path_hash=h)
+            tsum["test_register_s"] += time.perf_counter() - t0
+            t1 = time.perf_counter()
+            centers, ch = self._channels_for(pts)
+            if i_sel != 0:          # single-pose ablation for free: the same rules under the RANSAC/ICP pose T0
+                pts0, _ = self._finalize(_transform(p_n, cands[0][0]), gt0, path_hash=h)
+                c0, ch0 = self._channels_for(pts0)
+                idx0 = knn_indices(pts0, c0, cfg.smooth_k, device=cfg.device)
+                h1 = {f"h1_{k}": ch0[k][idx0].mean(axis=1) for k in ("glob_full", "loc10", "cal10") if k in ch0}
+            tsum["test_features_match_s"] += time.perf_counter() - t1
+            t2 = time.perf_counter()
+            idx = knn_indices(pts, centers, cfg.smooth_k, device=cfg.device)
+            maps = {k: v[idx].mean(axis=1).astype(np.float32) for k, v in ch.items()}
+            if i_sel == 0:
+                h1 = {f"h1_{k}": maps[k] for k in ("glob_full", "loc10", "cal10") if k in maps}
+            maps.update(h1)
+            rec = {"file": os.path.basename(s.path), "label": int(s.label), "n_points": int(len(pts)),
+                   "n_anom_points": int(gt.sum()), "fitness": float(fit), "pose_idx": int(i_sel),
+                   "n_hyp": len(cands), "reg_res": float(res[i_sel] if res else np.nan),
+                   "reg_res_T0": float(res[0] if res else np.nan)}
+            for k, v in maps.items():
+                st = object_score_stats(v)
+                rec.update({f"{k}_{r}": st[r] for r in ("max", "p99", "p95", "mean", "top1pct")})
+                obj.setdefault(k, []).append(object_score_rule(v, rule))
+            for k in KEY_CHANNELS:
+                if k in maps:
+                    pmaps[k].append(maps[k])
+            if s.path in save_left:
+                self._save_map(cls, s, pts, gt, maps, rec)
+            self.sample_records.append(rec)
+            labels.append(s.label)
+            gts.append(gt)
+            tsum["test_score_s"] += time.perf_counter() - t2
+
+        main = f"loc{int(round(cfg.local_mem * 100)):02d}"
+        m = compute_metrics(labels, obj[main], gts, pmaps[main] if pmaps.get(main) else pmaps["loc10"])
+        for k, v in obj.items():
+            m[f"{k}_o_auroc"] = compute_metrics(labels, v, [np.zeros(1)], [np.zeros(1)])["o_auroc"]
+        for k in KEY_CHANNELS:
+            if pmaps.get(k):
+                mc = compute_metrics(labels, obj[k], gts, pmaps[k])
+                for key in ("p_auroc", "p_aupr", "p_auroc_pooled", "p_aupr_pooled"):
+                    m[f"{k}_{key}"] = mc[key]
+        m["align_fitness_mean"] = float(np.mean(fits)) if fits else float("nan")
+        m["pose_switch_rate"] = switched / max(1, len(test))
+        m["local_mem_size"] = self._local.size
+        m.update(getattr(self, "train_cut_info", {}) or {})
+        n = max(1, len(test))
+        m.update({k: v for k, v in self.timing.items()})
+        m.update({k.replace("_s", "_per_scan_s"): v / n for k, v in tsum.items()})
+        m["peak_rss_gb"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1e6
+        if torch_cuda():
+            import torch
+            m["peak_gpu_gb"] = torch.cuda.max_memory_allocated() / 1e9
+        return m
+
+    def _maps_plan(self, test: list) -> set:
+        """Documented, score-independent selection of samples whose maps are saved: per category the first two
+        anomalous and the first normal test scans in file-name order."""
+        an = sorted(s.path for s in test if s.label == 1)[:2]
+        no = sorted(s.path for s in test if s.label == 0)[:1]
+        return set(an + no)
+
+    def _save_map(self, cls, s, pts, gt, maps, rec):
+        os.makedirs(self.cfg.save_maps, exist_ok=True)
+        keep = np.arange(len(pts))
+        if len(pts) > 30000:
+            keep = np.sort(np.random.default_rng(0).choice(len(pts), 30000, replace=False))
+        stem = os.path.splitext(os.path.basename(s.path))[0]
+        arrs = {"points": pts[keep].astype(np.float16), "gt": gt[keep].astype(np.uint8)}
+        for k in ("glob_cs", "glob_full", "loc10", "cal10", "hyb", "soft1"):
+            if k in maps:
+                arrs[k] = maps[k][keep].astype(np.float16)
+        np.savez_compressed(os.path.join(self.cfg.save_maps, f"{cls}__{stem}__s{self.cfg.seed}.npz"),
+                            meta=np.array(json_dumps(rec)), **arrs)
+
+
+def torch_cuda() -> bool:
+    try:
+        import torch
+        return torch.cuda.is_available()
+    except Exception:
+        return False
+
+
+def json_dumps(d: dict) -> str:
+    import json
+    return json.dumps(d)
 
 
 def run_benchmark(cfg: Config, classes: list[str] | None = None,
