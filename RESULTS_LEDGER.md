@@ -577,3 +577,14 @@ Files: results_and_summary/results/step16_s2/. Selection (MVTec + Real3D-AD, equ
 - MHR: no h1_hyb channel -> kept at H = 6 (pre-registered fallback).
 Provisional: {k 20, hyb, V01, top1pct, H 6}. Real-scan owners still change between folds for most categories (see protocol_audit).
 Next (session 3): MVTec dev with 24 held-out goods + Anomaly-ShapeNet dev (16d, 16c); then offline selection over all three.
+
+### STEP 16 session 3 (2026-10-23): MVTec dev with 24 held-out goods (10-13 min per k) + Anomaly-ShapeNet dev (62/65/74/95 min)
+Files: results_and_summary/results/step16_s3/ (+ Real3D-AD dev from step16_s2). Selection over all three benchmarks:
+- scale (loc10/p99): k=6 70.4, k=10 71.1, **k=20 72.2**, k=40 71.4 (MVTec 67.6, Real3D 76.5, ShapeNet 72.5 at k=20)
+- rule (k=20, p99): **hyb 75.5** (72.1 / 78.0 / 76.3); loc15 72.6, loc10 72.2, glob_full 71.1; all CIs vs hyb exclude 0
+- views: V01 72.22 = V012 72.20 -> **V01** (no real scans)
+- pooling (hyb): top1pct 77.0, **max 76.9** (tie -> simpler), p99 75.5, mean 70.9, p95 69.2
+- H: kept 6 (pre-registered); component rules show no gain from H=6 (single pose +0.1..+0.5, CIs include 0)
+FROZEN: configs/frozen_selection.json {k 20, hyb, V01, max, H 6}.
+Code: h1_hyb channel added; merge_categories accepts mvtec (MVTec merge would have failed); SPLIT logs now carry the dataset
+(session 3 MVTec logs were overwritten by ShapeNet logs with the same name); scripts/report_final.py; notebook step 17.

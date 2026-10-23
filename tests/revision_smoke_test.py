@@ -141,7 +141,7 @@ def main():
     m = model.evaluate("airplane")
     need = ["glob_cs", "glob_full", "loc05", "loc10", "loc15", "knn64", "knn256", "soft0p5", "soft1", "soft2",
             "cal10", "cal10_k0", "hyb", "loc10_V0", "loc10_V01", "loc10_V02", "loc10_M2", "loc10_V012_eq",
-            "glob_full_V0", "h1_loc10", "h1_cal10", "h1_glob_full"]
+            "glob_full_V0", "h1_loc10", "h1_cal10", "h1_glob_full", "h1_hyb"]
     missing = [c for c in need if f"{c}_o_auroc" not in m]
     assert not missing, missing
     for c in need:

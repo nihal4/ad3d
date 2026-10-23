@@ -1,0 +1,7 @@
+{
+  "max_nn": 20,
+  "rule": "hyb",
+  "views": "V01",
+  "pooling": "max",
+  "mhr": true
+}

@@ -15,7 +15,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 from ad3d.datasets import get_classes  # noqa: E402
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--dataset", default="real3d", choices=["real3d", "shapenet"])
+ap.add_argument("--dataset", default="real3d", choices=["real3d", "shapenet", "mvtec"])
 ap.add_argument("out_tag"); ap.add_argument("files", nargs="+")
 ap.add_argument("--out", default="results")
 ap.add_argument("--allow-partial", action="store_true")

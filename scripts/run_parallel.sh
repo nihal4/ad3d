@@ -95,7 +95,7 @@ if [ "${SPLIT:-0}" = "1" ]; then
       list=""; for i in "${!CATS[@]}"; do [ $((i % NGPU)) -eq "$g" ] && list="${list:+$list,}${CATS[$i]}"; done
       CUDA_VISIBLE_DEVICES=$g OMP_NUM_THREADS=$THREADS python $RUNPY --dataset "$DATASET" \
         --data-root "$ROOT" ${CFG[$name]} $EXTRA --seed "$s" --classes "$list" \
-        --out results/parts --tag "${name}${TAGSUF}-s${s}-part${g}" > "logs/${name}${TAGSUF}-s${s}-part${g}.log" 2>&1 &
+        --out results/parts --tag "${name}${TAGSUF}-s${s}-part${g}" > "logs/${name}${TAGSUF}-s${s}-part${g}_${DATASET}.log" 2>&1 &
       pids+=($!)
     done
     for p in "${pids[@]}"; do wait "$p"; done

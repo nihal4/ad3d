@@ -31,6 +31,10 @@ from .metrics import compute_metrics
 from .scoring import object_score, object_score_rule, object_score_stats, point_scores  # noqa: F401
 
 
+# rules also scored under the single RANSAC/ICP pose T0 (pose-hypothesis ablation for free); hyb added 2026-10-23
+H1_CHANNELS = ("glob_full", "loc05", "loc10", "loc15", "knn64", "knn256", "cal10", "hyb")
+
+
 @dataclass
 class Config:
     data_root: str = "data"
@@ -608,13 +612,13 @@ class Simple3DLite:
                 pts0, _ = self._finalize(_transform(p_n, cands[0][0]), gt0, path_hash=h)
                 c0, ch0 = self._channels_for(pts0)
                 idx0 = knn_indices(pts0, c0, cfg.smooth_k, device=cfg.device)
-                h1 = {f"h1_{k}": ch0[k][idx0].mean(axis=1) for k in ("glob_full", "loc05", "loc10", "loc15", "knn64", "knn256", "cal10") if k in ch0}
+                h1 = {f"h1_{k}": ch0[k][idx0].mean(axis=1) for k in H1_CHANNELS if k in ch0}
             tsum["test_features_match_s"] += time.perf_counter() - t1
             t2 = time.perf_counter()
             idx = knn_indices(pts, centers, cfg.smooth_k, device=cfg.device)
             maps = {k: v[idx].mean(axis=1).astype(np.float32) for k, v in ch.items()}
             if i_sel == 0:
-                h1 = {f"h1_{k}": maps[k] for k in ("glob_full", "loc05", "loc10", "loc15", "knn64", "knn256", "cal10") if k in maps}
+                h1 = {f"h1_{k}": maps[k] for k in H1_CHANNELS if k in maps}
             maps.update(h1)
             rec = {"file": os.path.basename(s.path), "label": int(s.label), "n_points": int(len(pts)),
                    "n_anom_points": int(gt.sum()), "fitness": float(fit), "pose_idx": int(i_sel),
