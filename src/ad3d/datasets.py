@@ -111,10 +111,12 @@ def read_txt_cloud(path: str) -> tuple[np.ndarray, np.ndarray]:
 # --------------------------------------------------------------------------- #
 # Dataset loaders
 # --------------------------------------------------------------------------- #
-def load_train(root: str, dataset: str, cls: str) -> list[np.ndarray]:
-    """Return the list of raw training (normal) point clouds for one category."""
+def load_train(root: str, dataset: str, cls: str, n_mvtec: int = 0) -> list[np.ndarray]:
+    """Return the list of raw training (normal) point clouds for one category.
+    MVTec 3D-AD has hundreds of training goods; the first N_PROTOS_MVTEC (sorted) are the prototypes unless n_mvtec > 0
+    asks for more (training-set-size study)."""
     if dataset == "mvtec":
-        paths = mvtec_train_paths(root, cls)[:N_PROTOS_MVTEC]
+        paths = mvtec_train_paths(root, cls)[:(n_mvtec if n_mvtec > 0 else N_PROTOS_MVTEC)]
         return [read_mvtec_xyz(p)[0] for p in paths]
     if dataset == "shapenet":
         paths = sorted(glob.glob(os.path.join(root, cls, "train", "*.pcd")))

@@ -78,7 +78,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--channels", default="", choices=["", "rev"],
                    help="rev = revision experiments: all decision rules / memory subsets from one run (channels.py)")
     p.add_argument("--save-maps", default="", help="directory for point clouds + score maps of a fixed sample subset")
-    p.add_argument("--n-protos", type=int, default=0, help="use only the first n prototypes (0 = all)")
+    p.add_argument("--n-protos", type=int, default=0, help="use only the first n prototypes (0 = all); MVTec 3D-AD: number of training goods used as prototypes (default 4)")
     p.add_argument("--test-noise", type=float, default=0.0)
     p.add_argument("--test-density", type=float, default=1.0)
     p.add_argument("--test-crop", type=float, default=1.0)

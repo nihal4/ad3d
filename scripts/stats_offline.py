@@ -53,6 +53,15 @@ def _auroc(y: np.ndarray, s: np.ndarray) -> float:
     return float((r[y == 1].sum() - n1 * (n1 + 1) / 2) / (n1 * n0))
 
 
+def keyed(recs):
+    """{sample key: record}. Older MVTec 3D-AD runs stored bare file names that repeat across defect folders
+    (000.tiff in every folder); then the key is the loading position, which is the same for every seed."""
+    names = [r["file"] for r in recs]
+    if len(set(names)) == len(names):
+        return {n: r for n, r in zip(names, recs)}
+    return {f"{i:05d}|{n}": r for i, (n, r) in enumerate(zip(names, recs))}
+
+
 def op_points(y, s, tpr_target=0.95, fpr_target=0.05):
     fpr, tpr, _ = roc_curve(y, s)
     fpr_at = float(np.min(fpr[tpr >= tpr_target])) if np.any(tpr >= tpr_target) else 1.0
@@ -80,9 +89,9 @@ def main():
     # arrays per (seed, cat, channel), test-file order made identical across seeds
     Y, S = {}, {}
     for cat in cats:
-        files = sorted(r["file"] for r in data[seeds[0]][cat])
+        files = sorted(keyed(data[seeds[0]][cat]))
         for sd in seeds:
-            by = {r["file"]: r for r in data[sd][cat]}
+            by = keyed(data[sd][cat])
             recs = [by[f] for f in files]
             Y[cat] = np.array([r["label"] for r in recs])
             for ch in chans:

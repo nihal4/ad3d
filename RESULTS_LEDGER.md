@@ -588,3 +588,30 @@ Files: results_and_summary/results/step16_s3/ (+ Real3D-AD dev from step16_s2). 
 FROZEN: configs/frozen_selection.json {k 20, hyb, V01, max, H 6}.
 Code: h1_hyb channel added; merge_categories accepts mvtec (MVTec merge would have failed); SPLIT logs now carry the dataset
 (session 3 MVTec logs were overwritten by ShapeNet logs with the same name); scripts/report_final.py; notebook step 17.
+
+### VENUE (2026-10-23): Engineering Applications of Artificial Intelligence (Elsevier, hybrid, SCIE + Scopus Q1); backup IEEE TIM.
+Advanced Engineering Informatics dropped as first choice: its scope excludes pattern-recognition papers unless they
+explicitly represent and use knowledge. Manuscript to be prepared after all experiments; checklist in paper/revision/venue_eaai.md.
+
+### STEP 17 session 4 (2026-10-23): FROZEN configuration on the TEST sets, MVTec 3D-AD + Real3D-AD, 5 seeds
+Files: results_and_summary/results/step17_s4/ ; paired bootstrap (B=1000, test objects within categories):
+results_and_summary/results/stats/final_<ds>_vs_<channel>/summary.md
+Timing: MVTec 27-33 min/seed (seed 0 with maps 51), Real3D-AD 58-61 min/seed (seed 0 with maps 74).
+Real3D-AD object AUROC (mean +- std over seeds):
+  hyb_max 86.51 +- 0.77 (headline) | h1_hyb 86.55 | hyb_top1pct 87.05 | loc10_max 85.77 | knn256 85.94 | cal10 82.21
+  glob_full_p99 78.32 | glob_full_max 75.32 | glob_cs_p99 78.55
+  hyb - glob_full_p99 +8.19 [+6.23, +10.24] (7/12 categories CI>0, none <0); hyb - glob_full_max +11.19 [+9.15, +13.26]
+  hyb - loc10_max +0.74 [-0.30, +1.71] (n.s.); hyb - h1_hyb -0.04 [-0.26, +0.20] -> pose hypotheses add nothing
+  FPR@95TPR 39.9 % vs 61.5 % (global p99); defect-size tertiles hyb 82.4/85.5/93.1 vs global 68.2/80.8/90.2
+  seed-0 point level: hyb P-AUROC 0.954 / P-AUPR 0.608 vs loc10 0.939/0.590, global 0.922/0.428
+  -> same mean as the old test-tuned method (86.5 +- 1.4) but with no test-informed setting, no real scans, smaller std.
+MVTec 3D-AD (4 training goods as prototypes, point cloud only):
+  hyb_max 68.26 +- 1.09 | h1_hyb 68.27 | glob_full_p99 65.85 | glob_full_max 64.79 | loc10_max 63.29 | cal10 61.95
+  hyb - glob_full_p99 +2.41 [+0.29, +4.59]; hyb - loc10 +4.98 [+2.59, +7.27]; hyb - h1_hyb -0.00 [-1.11, +1.13]
+  best: bagel 90.4, rope 92.6; worst: cable_gland 43.7, tire 54.3, cookie 56.4. Seed-0 P-AUROC hyb 0.836, global 0.835.
+  Context: BTF (Horwitz & Hoshen) FPFH on ALL training goods, organised grid: I-AUROC 0.753 (arXiv table) -> our 4-shot
+  number is not comparable; a training-set-size curve (4 / 10 / 25 goods) is planned for the robustness session.
+BUGS found: MVTec file names repeat across defect folders (000.tiff) -> (1) stats_offline aligned the wrong samples
+(fixed: positional keys for old files), (2) seed-0 MVTec maps overwrote each other (fixed: sample_id = '<kind>_<file>';
+maps re-run in 17f). AUROC numbers above are unaffected (computed from the record lists, labels verified 22/88 etc.).
+New: --n-protos on MVTec now loads that many training goods (training-set-size study).

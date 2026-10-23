@@ -35,7 +35,7 @@ def auc(y, s):
 def report(base, tag):
     tl = f"{base}/logs/timing.log"
     print("=== TIMING ===\n" + (open(tl).read() if os.path.exists(tl) else "(none)"))
-    files = sorted(glob.glob(f"{base}/results/parts/{tag}*-s*-part*_scores.json"))
+    files = sorted(glob.glob(f"{base}/results/parts/{tag}-s*-part*_scores.json"))
     print(f"=== SCORE FILES ({len(files)}) ===")
     per = defaultdict(lambda: defaultdict(dict))          # per[ds][seed][cls] = [records]
     for f in files:

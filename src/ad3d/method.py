@@ -35,6 +35,15 @@ from .scoring import object_score, object_score_rule, object_score_stats, point_
 H1_CHANNELS = ("glob_full", "loc05", "loc10", "loc15", "knn64", "knn256", "cal10", "hyb")
 
 
+def sample_id(path: str) -> str:
+    """Unique per-category name of a test sample. MVTec 3D-AD reuses file names in every defect folder
+    (test/<kind>/xyz/000.tiff), so its id carries the defect kind: '<kind>_000.tiff'. Other benchmarks: the file name."""
+    parts = os.path.normpath(path).split(os.sep)
+    if len(parts) >= 3 and parts[-2] == "xyz":
+        return f"{parts[-3]}_{parts[-1]}"
+    return os.path.basename(path)
+
+
 @dataclass
 class Config:
     data_root: str = "data"
@@ -255,7 +264,8 @@ class Simple3DLite:
             self._local = LocalMemory(device=self.cfg.device)
         self.timing = {}
         t_fit0 = time.perf_counter()
-        trains = getattr(self, "_train_override", None) or D.load_train(self.cfg.data_root, self.cfg.dataset, cls)
+        trains = getattr(self, "_train_override", None) or D.load_train(
+            self.cfg.data_root, self.cfg.dataset, cls, n_mvtec=self.cfg.n_protos if self.cfg.dataset == "mvtec" else 0)
         if self.cfg.n_protos > 0:
             trains = trains[:self.cfg.n_protos]
         obj_ids = list(range(len(trains)))
@@ -488,7 +498,7 @@ class Simple3DLite:
                     ch[k_] = v_
             obj_labels.append(s.label)
             obj_scores.append(_obj(p_scores))
-            rec = {"file": os.path.basename(s.path), "label": int(s.label),
+            rec = {"file": sample_id(s.path), "label": int(s.label),
                    "n_points": int(pts.shape[0]), "n_anom_points": int(gt.sum())}
             rec.update(object_score_stats(p_scores))
             for k_, v_ in ch.items():
@@ -620,7 +630,7 @@ class Simple3DLite:
             if i_sel == 0:
                 h1 = {f"h1_{k}": maps[k] for k in H1_CHANNELS if k in maps}
             maps.update(h1)
-            rec = {"file": os.path.basename(s.path), "label": int(s.label), "n_points": int(len(pts)),
+            rec = {"file": sample_id(s.path), "label": int(s.label), "n_points": int(len(pts)),
                    "n_anom_points": int(gt.sum()), "fitness": float(fit), "pose_idx": int(i_sel),
                    "n_hyp": len(cands), "reg_res": float(res[i_sel] if res else np.nan),
                    "reg_res_T0": float(res[0] if res else np.nan)}
@@ -672,7 +682,7 @@ class Simple3DLite:
         keep = np.arange(len(pts))
         if len(pts) > 30000:
             keep = np.sort(np.random.default_rng(0).choice(len(pts), 30000, replace=False))
-        stem = os.path.splitext(os.path.basename(s.path))[0]
+        stem = os.path.splitext(sample_id(s.path))[0]
         arrs = {"points": pts[keep].astype(np.float16), "gt": gt[keep].astype(np.uint8)}
         for k in ("glob_cs", "glob_full", "loc10", "cal10", "hyb", "soft1"):
             if k in maps:

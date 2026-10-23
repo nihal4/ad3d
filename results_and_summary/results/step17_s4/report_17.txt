@@ -1,0 +1,329 @@
+=== TIMING ===
+[timing] final seed 0 start 2026-10-23 07:13:04
+[timing] final seed 0 mvtec wall-clock 51 min
+[timing] final seed 1 start 2026-10-23 08:05:06
+[timing] final seed 1 mvtec wall-clock 29 min
+[timing] final seed 2 start 2026-10-23 08:34:10
+[timing] final seed 2 mvtec wall-clock 28 min
+[timing] final seed 3 start 2026-10-23 09:02:43
+[timing] final seed 3 mvtec wall-clock 27 min
+[timing] final seed 4 start 2026-10-23 09:30:37
+[timing] final seed 4 mvtec wall-clock 33 min
+[timing] final seed 0 start 2026-10-23 10:04:21
+[timing] final seed 0 real3d wall-clock 74 min
+[timing] final seed 1 start 2026-10-23 11:19:00
+[timing] final seed 1 real3d wall-clock 60 min
+[timing] final seed 2 start 2026-10-23 12:19:31
+[timing] final seed 2 real3d wall-clock 58 min
+[timing] final seed 3 start 2026-10-23 13:17:56
+[timing] final seed 3 real3d wall-clock 58 min
+[timing] final seed 4 start 2026-10-23 14:16:26
+[timing] final seed 4 real3d wall-clock 61 min
+
+=== SCORE FILES (20) ===
+
+######## mvtec: seeds [0, 1, 2, 3, 4]
+
+--- mvtec seed 0: 10 categories ---
+CAT|hyb_max|h1_hyb_max|hyb_top1pct|hyb_p99|loc10_max|loc10_p99|cal10_max|glob_full_max|glob_full_p99|glob_cs_max|glob_cs_p99|knn256_max
+CAT|mvtec|0|bagel|n=110|0.861|0.894|0.845|0.807|0.693|0.607|0.666|0.804|0.800|0.799|0.808|0.691
+CAT|mvtec|0|cable_gland|n=108|0.487|0.533|0.489|0.483|0.436|0.416|0.420|0.512|0.501|0.521|0.501|0.456
+CAT|mvtec|0|carrot|n=159|0.729|0.670|0.748|0.755|0.669|0.621|0.662|0.645|0.645|0.642|0.646|0.666
+CAT|mvtec|0|cookie|n=131|0.601|0.523|0.664|0.651|0.426|0.384|0.399|0.648|0.658|0.644|0.653|0.434
+CAT|mvtec|0|dowel|n=130|0.677|0.673|0.683|0.685|0.713|0.686|0.663|0.615|0.661|0.609|0.656|0.730
+CAT|mvtec|0|foam|n=100|0.565|0.565|0.682|0.721|0.589|0.639|0.526|0.629|0.644|0.645|0.664|0.676
+CAT|mvtec|0|peach|n=132|0.765|0.807|0.778|0.777|0.839|0.857|0.815|0.521|0.596|0.523|0.594|0.671
+CAT|mvtec|0|potato|n=114|0.738|0.742|0.730|0.712|0.550|0.603|0.604|0.798|0.786|0.799|0.785|0.722
+CAT|mvtec|0|rope|n=101|0.946|0.945|0.944|0.948|0.950|0.957|0.931|0.923|0.932|0.928|0.934|0.936
+CAT|mvtec|0|tire|n=112|0.520|0.529|0.517|0.516|0.568|0.589|0.572|0.453|0.438|0.451|0.436|0.434
+MEAN|mvtec|0|hyb_max=68.88|h1_hyb_max=68.79|hyb_top1pct=70.81|hyb_p99=70.55|loc10_max=64.34|loc10_p99=63.60|cal10_max=62.58|glob_full_max=65.47|glob_full_p99=66.60|glob_cs_max=65.62|glob_cs_p99=66.77|knn256_max=64.17
+
+--- mvtec seed 1: 10 categories ---
+CAT|hyb_max|h1_hyb_max|hyb_top1pct|hyb_p99|loc10_max|loc10_p99|cal10_max|glob_full_max|glob_full_p99|glob_cs_max|glob_cs_p99|knn256_max
+CAT|mvtec|1|bagel|n=110|0.898|0.897|0.870|0.791|0.659|0.607|0.631|0.873|0.857|0.875|0.862|0.700
+CAT|mvtec|1|cable_gland|n=108|0.502|0.517|0.478|0.472|0.450|0.461|0.406|0.544|0.509|0.534|0.512|0.469
+CAT|mvtec|1|carrot|n=159|0.788|0.827|0.806|0.813|0.671|0.673|0.707|0.711|0.703|0.712|0.705|0.742
+CAT|mvtec|1|cookie|n=131|0.601|0.607|0.587|0.566|0.421|0.454|0.437|0.660|0.633|0.664|0.630|0.491
+CAT|mvtec|1|dowel|n=130|0.585|0.582|0.608|0.630|0.580|0.605|0.598|0.530|0.602|0.531|0.604|0.628
+CAT|mvtec|1|foam|n=100|0.658|0.658|0.697|0.659|0.596|0.631|0.599|0.559|0.581|0.588|0.605|0.623
+CAT|mvtec|1|peach|n=132|0.548|0.563|0.533|0.504|0.429|0.391|0.425|0.615|0.632|0.618|0.627|0.619
+CAT|mvtec|1|potato|n=114|0.774|0.775|0.749|0.728|0.739|0.672|0.690|0.740|0.699|0.732|0.698|0.861
+CAT|mvtec|1|rope|n=101|0.945|0.944|0.952|0.956|0.976|0.964|0.909|0.916|0.937|0.919|0.933|0.948
+CAT|mvtec|1|tire|n=112|0.566|0.583|0.578|0.585|0.553|0.601|0.541|0.538|0.580|0.543|0.578|0.597
+MEAN|mvtec|1|hyb_max=68.66|h1_hyb_max=69.53|hyb_top1pct=68.58|hyb_p99=67.03|loc10_max=60.73|loc10_p99=60.60|cal10_max=59.43|glob_full_max=66.87|glob_full_p99=67.35|glob_cs_max=67.14|glob_cs_p99=67.54|knn256_max=66.77
+
+--- mvtec seed 2: 10 categories ---
+CAT|hyb_max|h1_hyb_max|hyb_top1pct|hyb_p99|loc10_max|loc10_p99|cal10_max|glob_full_max|glob_full_p99|glob_cs_max|glob_cs_p99|knn256_max
+CAT|mvtec|2|bagel|n=110|0.936|0.903|0.909|0.822|0.711|0.617|0.697|0.824|0.803|0.831|0.798|0.820
+CAT|mvtec|2|cable_gland|n=108|0.419|0.438|0.454|0.475|0.512|0.509|0.473|0.415|0.449|0.412|0.445|0.442
+CAT|mvtec|2|carrot|n=159|0.546|0.491|0.563|0.576|0.488|0.506|0.485|0.555|0.556|0.556|0.556|0.520
+CAT|mvtec|2|cookie|n=131|0.592|0.563|0.598|0.604|0.504|0.540|0.506|0.552|0.556|0.547|0.549|0.478
+CAT|mvtec|2|dowel|n=130|0.704|0.725|0.719|0.741|0.752|0.745|0.740|0.540|0.619|0.544|0.626|0.731
+CAT|mvtec|2|foam|n=100|0.709|0.709|0.776|0.727|0.679|0.712|0.671|0.659|0.657|0.685|0.676|0.707
+CAT|mvtec|2|peach|n=132|0.752|0.754|0.766|0.762|0.770|0.744|0.751|0.613|0.676|0.609|0.671|0.697
+CAT|mvtec|2|potato|n=114|0.779|0.758|0.750|0.716|0.676|0.642|0.646|0.713|0.738|0.712|0.737|0.739
+CAT|mvtec|2|rope|n=101|0.950|0.950|0.954|0.947|0.963|0.957|0.876|0.893|0.900|0.894|0.899|0.932
+CAT|mvtec|2|tire|n=112|0.587|0.556|0.601|0.619|0.623|0.638|0.634|0.595|0.590|0.596|0.594|0.425
+MEAN|mvtec|2|hyb_max=69.75|h1_hyb_max=68.48|hyb_top1pct=70.89|hyb_p99=69.88|loc10_max=66.79|loc10_p99=66.10|cal10_max=64.80|glob_full_max=63.59|glob_full_p99=65.44|glob_cs_max=63.86|glob_cs_p99=65.51|knn256_max=64.90
+
+--- mvtec seed 3: 10 categories ---
+CAT|hyb_max|h1_hyb_max|hyb_top1pct|hyb_p99|loc10_max|loc10_p99|cal10_max|glob_full_max|glob_full_p99|glob_cs_max|glob_cs_p99|knn256_max
+CAT|mvtec|3|bagel|n=110|0.963|0.954|0.956|0.915|0.860|0.753|0.854|0.822|0.808|0.821|0.807|0.853
+CAT|mvtec|3|cable_gland|n=108|0.396|0.420|0.389|0.409|0.401|0.396|0.385|0.524|0.520|0.513|0.508|0.414
+CAT|mvtec|3|carrot|n=159|0.781|0.734|0.796|0.800|0.646|0.691|0.625|0.719|0.722|0.717|0.721|0.698
+CAT|mvtec|3|cookie|n=131|0.567|0.559|0.586|0.603|0.545|0.494|0.507|0.593|0.583|0.592|0.579|0.511
+CAT|mvtec|3|dowel|n=130|0.625|0.610|0.657|0.676|0.720|0.740|0.706|0.475|0.518|0.468|0.523|0.724
+CAT|mvtec|3|foam|n=100|0.634|0.634|0.691|0.682|0.581|0.636|0.528|0.588|0.644|0.562|0.657|0.591
+CAT|mvtec|3|peach|n=132|0.644|0.622|0.621|0.595|0.376|0.341|0.459|0.586|0.569|0.587|0.569|0.665
+CAT|mvtec|3|potato|n=114|0.667|0.703|0.667|0.653|0.694|0.668|0.644|0.582|0.603|0.580|0.601|0.765
+CAT|mvtec|3|rope|n=101|0.859|0.855|0.851|0.842|0.928|0.913|0.822|0.934|0.920|0.930|0.919|0.944
+CAT|mvtec|3|tire|n=112|0.564|0.526|0.583|0.595|0.530|0.619|0.562|0.514|0.547|0.511|0.548|0.464
+MEAN|mvtec|3|hyb_max=66.99|h1_hyb_max=66.16|hyb_top1pct=67.97|hyb_p99=67.71|loc10_max=62.81|loc10_p99=62.51|cal10_max=60.93|glob_full_max=63.36|glob_full_p99=64.34|glob_cs_max=62.81|glob_cs_p99=64.32|knn256_max=66.30
+
+--- mvtec seed 4: 10 categories ---
+CAT|hyb_max|h1_hyb_max|hyb_top1pct|hyb_p99|loc10_max|loc10_p99|cal10_max|glob_full_max|glob_full_p99|glob_cs_max|glob_cs_p99|knn256_max
+CAT|mvtec|4|bagel|n=110|0.858|0.877|0.832|0.773|0.413|0.492|0.505|0.872|0.831|0.875|0.846|0.569
+CAT|mvtec|4|cable_gland|n=108|0.381|0.414|0.369|0.394|0.432|0.437|0.339|0.515|0.510|0.519|0.511|0.365
+CAT|mvtec|4|carrot|n=159|0.690|0.691|0.704|0.711|0.634|0.662|0.649|0.670|0.683|0.670|0.682|0.648
+CAT|mvtec|4|cookie|n=131|0.458|0.438|0.484|0.490|0.429|0.433|0.453|0.540|0.561|0.531|0.551|0.457
+CAT|mvtec|4|dowel|n=130|0.647|0.644|0.653|0.672|0.651|0.650|0.725|0.529|0.584|0.527|0.578|0.635
+CAT|mvtec|4|foam|n=100|0.788|0.788|0.766|0.708|0.668|0.657|0.670|0.675|0.662|0.646|0.677|0.651
+CAT|mvtec|4|peach|n=132|0.757|0.803|0.764|0.775|0.768|0.787|0.780|0.524|0.578|0.524|0.576|0.627
+CAT|mvtec|4|potato|n=114|0.713|0.704|0.696|0.669|0.773|0.753|0.747|0.699|0.676|0.702|0.676|0.834
+CAT|mvtec|4|rope|n=101|0.931|0.931|0.932|0.928|0.950|0.962|0.864|0.943|0.953|0.943|0.951|0.939
+CAT|mvtec|4|tire|n=112|0.480|0.547|0.489|0.509|0.459|0.516|0.467|0.500|0.517|0.501|0.513|0.428
+MEAN|mvtec|4|hyb_max=67.04|h1_hyb_max=68.36|hyb_top1pct=66.89|hyb_p99=66.29|loc10_max=61.77|loc10_p99=63.50|cal10_max=62.00|glob_full_max=64.67|glob_full_p99=65.54|glob_cs_max=64.37|glob_cs_p99=65.61|knn256_max=61.52
+
+=== mvtec: object AUROC, mean +- std over 5 seeds ===
+          hyb_max   68.26 +- 1.09   seeds: 68.88 68.66 69.75 66.99 67.04
+       h1_hyb_max   68.27 +- 1.13   seeds: 68.79 69.53 68.48 66.16 68.36
+      hyb_top1pct   69.03 +- 1.58   seeds: 70.81 68.58 70.89 67.97 66.89
+          hyb_p99   68.29 +- 1.65   seeds: 70.55 67.03 69.88 67.71 66.29
+        loc10_max   63.29 +- 2.12   seeds: 64.34 60.73 66.79 62.81 61.77
+        loc10_p99   63.26 +- 1.78   seeds: 63.60 60.60 66.10 62.51 63.50
+        cal10_max   61.95 +- 1.78   seeds: 62.58 59.43 64.80 60.93 62.00
+    glob_full_max   64.79 +- 1.29   seeds: 65.47 66.87 63.59 63.36 64.67
+    glob_full_p99   65.85 +- 1.03   seeds: 66.60 67.35 65.44 64.34 65.54
+      glob_cs_max   64.76 +- 1.49   seeds: 65.62 67.14 63.86 62.81 64.37
+      glob_cs_p99   65.95 +- 1.11   seeds: 66.77 67.54 65.51 64.32 65.61
+       knn256_max   64.73 +- 1.86   seeds: 64.17 66.77 64.90 66.30 61.52
+
+######## real3d: seeds [0, 1, 2, 3, 4]
+
+--- real3d seed 0: 12 categories ---
+CAT|hyb_max|h1_hyb_max|hyb_top1pct|hyb_p99|loc10_max|loc10_p99|cal10_max|glob_full_max|glob_full_p99|glob_cs_max|glob_cs_p99|knn256_max
+CAT|real3d|0|airplane|n=100|0.792|0.797|0.789|0.778|0.789|0.790|0.766|0.626|0.660|0.616|0.657|0.782
+CAT|real3d|0|candybar|n=100|0.991|0.990|0.991|0.989|0.997|0.998|0.967|0.960|0.968|0.962|0.974|0.998
+CAT|real3d|0|car|n=100|0.890|0.890|0.888|0.863|0.838|0.819|0.624|0.676|0.674|0.658|0.670|0.804
+CAT|real3d|0|chicken|n=106|0.779|0.793|0.793|0.802|0.769|0.785|0.762|0.698|0.748|0.698|0.747|0.772
+CAT|real3d|0|diamond|n=100|1.000|1.000|1.000|1.000|1.000|1.000|0.999|0.964|0.989|0.963|0.987|0.999
+CAT|real3d|0|duck|n=100|0.882|0.893|0.889|0.885|0.902|0.895|0.858|0.766|0.763|0.754|0.757|0.885
+CAT|real3d|0|fish|n=100|1.000|1.000|1.000|1.000|1.000|0.999|0.970|0.853|0.843|0.855|0.850|0.999
+CAT|real3d|0|gemstone|n=100|0.888|0.887|0.874|0.845|0.878|0.811|0.776|0.802|0.849|0.800|0.847|0.896
+CAT|real3d|0|seahorse|n=100|0.810|0.810|0.822|0.829|0.844|0.850|0.888|0.606|0.660|0.595|0.637|0.853
+CAT|real3d|0|shell|n=100|0.586|0.584|0.581|0.594|0.571|0.558|0.540|0.619|0.597|0.642|0.622|0.590
+CAT|real3d|0|starfish|n=100|0.829|0.819|0.864|0.891|0.778|0.858|0.752|0.721|0.846|0.736|0.850|0.778
+CAT|real3d|0|toffees|n=100|0.781|0.780|0.827|0.848|0.787|0.797|0.724|0.706|0.781|0.712|0.786|0.809
+MEAN|real3d|0|hyb_max=85.22|h1_hyb_max=85.35|hyb_top1pct=85.98|hyb_p99=86.03|loc10_max=84.60|loc10_p99=84.67|cal10_max=80.22|glob_full_max=74.97|glob_full_p99=78.16|glob_cs_max=74.92|glob_cs_p99=78.21|knn256_max=84.71
+
+--- real3d seed 1: 12 categories ---
+CAT|hyb_max|h1_hyb_max|hyb_top1pct|hyb_p99|loc10_max|loc10_p99|cal10_max|glob_full_max|glob_full_p99|glob_cs_max|glob_cs_p99|knn256_max
+CAT|real3d|1|airplane|n=100|0.903|0.902|0.906|0.904|0.904|0.916|0.866|0.713|0.753|0.738|0.756|0.908
+CAT|real3d|1|candybar|n=100|0.989|0.989|0.988|0.983|0.996|0.998|0.963|0.964|0.953|0.962|0.956|0.999
+CAT|real3d|1|car|n=100|0.906|0.906|0.900|0.886|0.832|0.812|0.720|0.700|0.656|0.698|0.655|0.814
+CAT|real3d|1|chicken|n=106|0.806|0.817|0.815|0.825|0.800|0.808|0.819|0.690|0.744|0.694|0.747|0.786
+CAT|real3d|1|diamond|n=100|1.000|1.000|1.000|1.000|1.000|1.000|1.000|0.960|0.992|0.961|0.992|1.000
+CAT|real3d|1|duck|n=100|0.867|0.866|0.858|0.839|0.874|0.852|0.827|0.727|0.740|0.742|0.765|0.859
+CAT|real3d|1|fish|n=100|0.999|0.999|1.000|1.000|1.000|0.999|0.975|0.852|0.829|0.857|0.840|0.985
+CAT|real3d|1|gemstone|n=100|0.874|0.876|0.861|0.828|0.877|0.819|0.778|0.782|0.840|0.784|0.843|0.881
+CAT|real3d|1|seahorse|n=100|0.811|0.810|0.821|0.826|0.813|0.824|0.881|0.596|0.626|0.584|0.620|0.850
+CAT|real3d|1|shell|n=100|0.584|0.575|0.550|0.531|0.537|0.518|0.523|0.604|0.575|0.616|0.605|0.532
+CAT|real3d|1|starfish|n=100|0.828|0.829|0.873|0.887|0.886|0.891|0.889|0.678|0.838|0.668|0.821|0.886
+CAT|real3d|1|toffees|n=100|0.880|0.881|0.893|0.880|0.844|0.811|0.786|0.733|0.781|0.758|0.779|0.842
+MEAN|real3d|1|hyb_max=87.05|h1_hyb_max=87.08|hyb_top1pct=87.20|hyb_p99=86.57|loc10_max=86.36|loc10_p99=85.41|cal10_max=83.56|glob_full_max=74.99|glob_full_p99=77.73|glob_cs_max=75.51|glob_cs_p99=78.15|knn256_max=86.19
+
+--- real3d seed 2: 12 categories ---
+CAT|hyb_max|h1_hyb_max|hyb_top1pct|hyb_p99|loc10_max|loc10_p99|cal10_max|glob_full_max|glob_full_p99|glob_cs_max|glob_cs_p99|knn256_max
+CAT|real3d|2|airplane|n=100|0.865|0.846|0.853|0.828|0.848|0.847|0.797|0.738|0.698|0.756|0.720|0.844
+CAT|real3d|2|candybar|n=100|0.988|0.989|0.987|0.984|0.997|0.998|0.962|0.962|0.958|0.959|0.960|0.999
+CAT|real3d|2|car|n=100|0.885|0.885|0.892|0.862|0.844|0.804|0.685|0.679|0.663|0.668|0.673|0.850
+CAT|real3d|2|chicken|n=106|0.795|0.806|0.805|0.825|0.797|0.815|0.805|0.710|0.748|0.711|0.750|0.804
+CAT|real3d|2|diamond|n=100|1.000|1.000|1.000|1.000|1.000|1.000|1.000|0.946|0.990|0.946|0.989|1.000
+CAT|real3d|2|duck|n=100|0.889|0.883|0.883|0.866|0.887|0.872|0.851|0.804|0.774|0.812|0.799|0.878
+CAT|real3d|2|fish|n=100|0.999|0.999|1.000|1.000|1.000|0.998|0.961|0.840|0.816|0.851|0.829|1.000
+CAT|real3d|2|gemstone|n=100|0.901|0.906|0.900|0.875|0.894|0.850|0.798|0.792|0.857|0.797|0.857|0.909
+CAT|real3d|2|seahorse|n=100|0.781|0.773|0.805|0.831|0.811|0.828|0.898|0.534|0.622|0.504|0.602|0.883
+CAT|real3d|2|shell|n=100|0.655|0.666|0.661|0.665|0.645|0.646|0.611|0.685|0.694|0.672|0.694|0.611
+CAT|real3d|2|starfish|n=100|0.850|0.844|0.898|0.922|0.880|0.936|0.872|0.736|0.886|0.724|0.873|0.894
+CAT|real3d|2|toffees|n=100|0.889|0.887|0.903|0.888|0.867|0.856|0.748|0.737|0.786|0.710|0.798|0.848
+MEAN|real3d|2|hyb_max=87.48|h1_hyb_max=87.37|hyb_top1pct=88.22|hyb_p99=87.88|loc10_max=87.25|loc10_p99=87.10|cal10_max=83.23|glob_full_max=76.34|glob_full_p99=79.10|glob_cs_max=75.92|glob_cs_p99=79.53|knn256_max=87.66
+
+--- real3d seed 3: 12 categories ---
+CAT|hyb_max|h1_hyb_max|hyb_top1pct|hyb_p99|loc10_max|loc10_p99|cal10_max|glob_full_max|glob_full_p99|glob_cs_max|glob_cs_p99|knn256_max
+CAT|real3d|3|airplane|n=100|0.815|0.818|0.814|0.806|0.801|0.805|0.763|0.712|0.690|0.703|0.703|0.808
+CAT|real3d|3|candybar|n=100|0.989|0.990|0.987|0.984|0.995|0.998|0.962|0.963|0.958|0.960|0.958|1.000
+CAT|real3d|3|car|n=100|0.889|0.892|0.894|0.866|0.828|0.787|0.673|0.673|0.637|0.680|0.638|0.839
+CAT|real3d|3|chicken|n=106|0.730|0.742|0.744|0.755|0.717|0.746|0.752|0.657|0.703|0.657|0.708|0.726
+CAT|real3d|3|diamond|n=100|1.000|1.000|1.000|1.000|1.000|1.000|1.000|0.938|0.986|0.936|0.983|1.000
+CAT|real3d|3|duck|n=100|0.882|0.882|0.884|0.867|0.880|0.865|0.839|0.720|0.738|0.735|0.758|0.859
+CAT|real3d|3|fish|n=100|0.999|0.999|1.000|1.000|1.000|0.999|0.956|0.842|0.814|0.856|0.826|0.977
+CAT|real3d|3|gemstone|n=100|0.914|0.908|0.900|0.878|0.886|0.840|0.823|0.836|0.860|0.840|0.862|0.903
+CAT|real3d|3|seahorse|n=100|0.820|0.820|0.841|0.848|0.850|0.851|0.901|0.585|0.644|0.570|0.650|0.893
+CAT|real3d|3|shell|n=100|0.639|0.629|0.631|0.623|0.605|0.593|0.607|0.702|0.702|0.665|0.683|0.603
+CAT|real3d|3|starfish|n=100|0.828|0.839|0.844|0.860|0.850|0.827|0.849|0.641|0.857|0.668|0.864|0.844
+CAT|real3d|3|toffees|n=100|0.887|0.890|0.896|0.910|0.836|0.860|0.782|0.742|0.810|0.748|0.801|0.833
+MEAN|real3d|3|hyb_max=86.60|h1_hyb_max=86.73|hyb_top1pct=86.95|hyb_p99=86.63|loc10_max=85.39|loc10_p99=84.76|cal10_max=82.55|glob_full_max=75.10|glob_full_p99=78.32|glob_cs_max=75.14|glob_cs_p99=78.61|knn256_max=85.70
+
+--- real3d seed 4: 12 categories ---
+CAT|hyb_max|h1_hyb_max|hyb_top1pct|hyb_p99|loc10_max|loc10_p99|cal10_max|glob_full_max|glob_full_p99|glob_cs_max|glob_cs_p99|knn256_max
+CAT|real3d|4|airplane|n=100|0.826|0.824|0.826|0.820|0.832|0.836|0.807|0.692|0.687|0.688|0.691|0.832
+CAT|real3d|4|candybar|n=100|0.990|0.988|0.991|0.989|0.996|0.998|0.960|0.965|0.972|0.962|0.974|0.999
+CAT|real3d|4|car|n=100|0.902|0.899|0.907|0.873|0.823|0.798|0.669|0.657|0.648|0.664|0.642|0.858
+CAT|real3d|4|chicken|n=106|0.770|0.784|0.781|0.790|0.780|0.797|0.745|0.751|0.785|0.746|0.786|0.778
+CAT|real3d|4|diamond|n=100|1.000|1.000|1.000|1.000|1.000|1.000|1.000|0.926|0.982|0.924|0.978|1.000
+CAT|real3d|4|duck|n=100|0.907|0.911|0.906|0.898|0.918|0.908|0.886|0.720|0.715|0.726|0.719|0.905
+CAT|real3d|4|fish|n=100|1.000|1.000|1.000|1.000|1.000|0.999|0.966|0.859|0.833|0.858|0.842|1.000
+CAT|real3d|4|gemstone|n=100|0.851|0.847|0.852|0.814|0.834|0.772|0.743|0.772|0.845|0.771|0.841|0.832
+CAT|real3d|4|seahorse|n=100|0.800|0.794|0.806|0.816|0.805|0.818|0.876|0.561|0.620|0.541|0.597|0.851
+CAT|real3d|4|shell|n=100|0.629|0.649|0.644|0.643|0.607|0.582|0.582|0.708|0.693|0.685|0.704|0.590
+CAT|real3d|4|starfish|n=100|0.781|0.762|0.812|0.816|0.804|0.784|0.804|0.657|0.826|0.632|0.818|0.792
+CAT|real3d|4|toffees|n=100|0.890|0.890|0.903|0.891|0.835|0.836|0.740|0.756|0.790|0.772|0.800|0.817
+MEAN|real3d|4|hyb_max=86.21|h1_hyb_max=86.23|hyb_top1pct=86.91|hyb_p99=86.24|loc10_max=85.27|loc10_p99=84.40|cal10_max=81.49|glob_full_max=75.20|glob_full_p99=78.29|glob_cs_max=74.74|glob_cs_p99=78.27|knn256_max=85.44
+
+=== real3d: object AUROC, mean +- std over 5 seeds ===
+          hyb_max   86.51 +- 0.77   seeds: 85.22 87.05 87.48 86.60 86.21
+       h1_hyb_max   86.55 +- 0.71   seeds: 85.35 87.08 87.37 86.73 86.23
+      hyb_top1pct   87.05 +- 0.71   seeds: 85.98 87.20 88.22 86.95 86.91
+          hyb_p99   86.67 +- 0.64   seeds: 86.03 86.57 87.88 86.63 86.24
+        loc10_max   85.77 +- 0.93   seeds: 84.60 86.36 87.25 85.39 85.27
+        loc10_p99   85.27 +- 0.97   seeds: 84.67 85.41 87.10 84.76 84.40
+        cal10_max   82.21 +- 1.22   seeds: 80.22 83.56 83.23 82.55 81.49
+    glob_full_max   75.32 +- 0.52   seeds: 74.97 74.99 76.34 75.10 75.20
+    glob_full_p99   78.32 +- 0.44   seeds: 78.16 77.73 79.10 78.32 78.29
+      glob_cs_max   75.25 +- 0.42   seeds: 74.92 75.51 75.92 75.14 74.74
+      glob_cs_p99   78.55 +- 0.51   seeds: 78.21 78.15 79.53 78.61 78.27
+       knn256_max   85.94 +- 0.98   seeds: 84.71 86.19 87.66 85.70 85.44
+
+=== MERGED CSV MEANS (point-level metrics of the key channels) ===
+final-s0_mvtec_merged-20261023-080458.csv | o_auroc=0.6434 p_auroc=0.8090 p_aupr=0.2371 glob_cs_o_auroc=0.6562 glob_full_o_auroc=0.6547 loc10_o_auroc=0.6434 knn256_o_auroc=0.6417 soft1_o_auroc=0.5355 cal10_o_auroc=0.6258 hyb_o_auroc=0.6888 h1_hyb_o_auroc=0.6879 glob_cs_p_auroc=0.8330 glob_cs_p_aupr=0.2631 glob_full_p_auroc=0.8353 glob_full_p_aupr=0.2642 loc10_p_auroc=0.8090 loc10_p_aupr=0.2371 knn256_p_auroc=0.7972 knn256_p_aupr=0.2562 soft1_p_auroc=0.7611 soft1_p_aupr=0.1676 cal10_p_auroc=0.8054 cal10_p_aupr=0.2359 hyb_p_auroc=0.8364 hyb_p_aupr=0.3272
+   time/memory: fit_register_s=12.4 fit_memory_s=22.4 test_register_per_scan_s=0.346 test_features_match_per_scan_s=1.36 test_per_scan_score_per_scan_s=0.0555 peak_rss_gb=3.06 peak_gpu_gb=0.28
+final-s0_real3d_merged-20261023-111852.csv | o_auroc=0.8460 p_auroc=0.9390 p_aupr=0.5903 glob_cs_o_auroc=0.7492 glob_full_o_auroc=0.7497 loc10_o_auroc=0.8460 knn256_o_auroc=0.8471 soft1_o_auroc=0.8420 cal10_o_auroc=0.8022 hyb_o_auroc=0.8522 h1_hyb_o_auroc=0.8535 glob_cs_p_auroc=0.9235 glob_cs_p_aupr=0.4304 glob_full_p_auroc=0.9220 glob_full_p_aupr=0.4275 loc10_p_auroc=0.9390 loc10_p_aupr=0.5903 knn256_p_auroc=0.9411 knn256_p_aupr=0.5828 soft1_p_auroc=0.9430 soft1_p_aupr=0.5972 cal10_p_auroc=0.9338 cal10_p_aupr=0.5448 hyb_p_auroc=0.9543 hyb_p_aupr=0.6077
+   time/memory: fit_register_s=8.17 fit_memory_s=47 test_register_per_scan_s=2.61 test_features_match_per_scan_s=2.14 test_per_scan_score_per_scan_s=0.139 peak_rss_gb=3.47 peak_gpu_gb=0.281
+final-s1_mvtec_merged-20261023-083409.csv | o_auroc=0.6073 p_auroc=0.7952 p_aupr=0.2293 glob_cs_o_auroc=0.6714 glob_full_o_auroc=0.6687 loc10_o_auroc=0.6073 knn256_o_auroc=0.6677 soft1_o_auroc=0.5513 cal10_o_auroc=0.5943 hyb_o_auroc=0.6866 h1_hyb_o_auroc=0.6953 glob_cs_p_auroc=0.8307 glob_cs_p_aupr=0.2703 glob_full_p_auroc=0.8333 glob_full_p_aupr=0.2720 loc10_p_auroc=0.7952 loc10_p_aupr=0.2293 knn256_p_auroc=0.7916 knn256_p_aupr=0.2681 soft1_p_auroc=0.7467 soft1_p_aupr=0.1711 cal10_p_auroc=0.7852 cal10_p_aupr=0.2283 hyb_p_auroc=0.8241 hyb_p_aupr=0.3095
+   time/memory: fit_register_s=2.73 fit_memory_s=24.2 test_register_per_scan_s=0.395 test_features_match_per_scan_s=1.48 test_per_scan_score_per_scan_s=0.0569 peak_rss_gb=3.06 peak_gpu_gb=0.28
+final-s1_real3d_merged-20261023-121930.csv | o_auroc=0.8636 p_auroc=0.9433 p_aupr=0.5883 glob_cs_o_auroc=0.7551 glob_full_o_auroc=0.7499 loc10_o_auroc=0.8636 knn256_o_auroc=0.8619 soft1_o_auroc=0.8566 cal10_o_auroc=0.8356 hyb_o_auroc=0.8705 h1_hyb_o_auroc=0.8708 glob_cs_p_auroc=0.9217 glob_cs_p_aupr=0.4369 glob_full_p_auroc=0.9206 glob_full_p_aupr=0.4318 loc10_p_auroc=0.9433 loc10_p_aupr=0.5883 knn256_p_auroc=0.9457 knn256_p_aupr=0.5903 soft1_p_auroc=0.9478 soft1_p_aupr=0.5963 cal10_p_auroc=0.9387 cal10_p_aupr=0.5579 hyb_p_auroc=0.9567 hyb_p_aupr=0.6146
+   time/memory: fit_register_s=5.6 fit_memory_s=53.1 test_register_per_scan_s=2.65 test_features_match_per_scan_s=2.17 test_per_scan_score_per_scan_s=0.138 peak_rss_gb=3.43 peak_gpu_gb=0.281
+final-s2_mvtec_merged-20261023-090242.csv | o_auroc=0.6679 p_auroc=0.7928 p_aupr=0.2351 glob_cs_o_auroc=0.6386 glob_full_o_auroc=0.6359 loc10_o_auroc=0.6679 knn256_o_auroc=0.6490 soft1_o_auroc=0.5440 cal10_o_auroc=0.6480 hyb_o_auroc=0.6975 h1_hyb_o_auroc=0.6848 glob_cs_p_auroc=0.8299 glob_cs_p_aupr=0.2583 glob_full_p_auroc=0.8308 glob_full_p_aupr=0.2581 loc10_p_auroc=0.7928 loc10_p_aupr=0.2351 knn256_p_auroc=0.7874 knn256_p_aupr=0.2630 soft1_p_auroc=0.7489 soft1_p_aupr=0.1635 cal10_p_auroc=0.7722 cal10_p_aupr=0.2235 hyb_p_auroc=0.8147 hyb_p_aupr=0.3140
+   time/memory: fit_register_s=2.69 fit_memory_s=23.6 test_register_per_scan_s=0.374 test_features_match_per_scan_s=1.46 test_per_scan_score_per_scan_s=0.0564 peak_rss_gb=3.07 peak_gpu_gb=0.281
+final-s2_real3d_merged-20261023-131755.csv | o_auroc=0.8725 p_auroc=0.9412 p_aupr=0.5978 glob_cs_o_auroc=0.7592 glob_full_o_auroc=0.7634 loc10_o_auroc=0.8725 knn256_o_auroc=0.8766 soft1_o_auroc=0.8712 cal10_o_auroc=0.8323 hyb_o_auroc=0.8748 h1_hyb_o_auroc=0.8737 glob_cs_p_auroc=0.9252 glob_cs_p_aupr=0.4436 glob_full_p_auroc=0.9247 glob_full_p_aupr=0.4435 loc10_p_auroc=0.9412 loc10_p_aupr=0.5978 knn256_p_auroc=0.9431 knn256_p_aupr=0.6013 soft1_p_auroc=0.9453 soft1_p_aupr=0.6035 cal10_p_auroc=0.9363 cal10_p_aupr=0.5583 hyb_p_auroc=0.9561 hyb_p_aupr=0.6176
+   time/memory: fit_register_s=5.58 fit_memory_s=51.7 test_register_per_scan_s=2.53 test_features_match_per_scan_s=2.09 test_per_scan_score_per_scan_s=0.134 peak_rss_gb=3.45 peak_gpu_gb=0.281
+final-s3_mvtec_merged-20261023-093036.csv | o_auroc=0.6281 p_auroc=0.8132 p_aupr=0.2387 glob_cs_o_auroc=0.6281 glob_full_o_auroc=0.6336 loc10_o_auroc=0.6281 knn256_o_auroc=0.6630 soft1_o_auroc=0.5614 cal10_o_auroc=0.6093 hyb_o_auroc=0.6699 h1_hyb_o_auroc=0.6616 glob_cs_p_auroc=0.8366 glob_cs_p_aupr=0.2511 glob_full_p_auroc=0.8392 glob_full_p_aupr=0.2545 loc10_p_auroc=0.8132 loc10_p_aupr=0.2387 knn256_p_auroc=0.8057 knn256_p_aupr=0.2653 soft1_p_auroc=0.7647 soft1_p_aupr=0.1718 cal10_p_auroc=0.7899 cal10_p_aupr=0.2186 hyb_p_auroc=0.8296 hyb_p_aupr=0.3039
+   time/memory: fit_register_s=2.69 fit_memory_s=22.9 test_register_per_scan_s=0.367 test_features_match_per_scan_s=1.43 test_per_scan_score_per_scan_s=0.0567 peak_rss_gb=3.08 peak_gpu_gb=0.28
+final-s3_real3d_merged-20261023-141626.csv | o_auroc=0.8539 p_auroc=0.9401 p_aupr=0.5916 glob_cs_o_auroc=0.7514 glob_full_o_auroc=0.7510 loc10_o_auroc=0.8539 knn256_o_auroc=0.8570 soft1_o_auroc=0.8523 cal10_o_auroc=0.8255 hyb_o_auroc=0.8660 h1_hyb_o_auroc=0.8673 glob_cs_p_auroc=0.9235 glob_cs_p_aupr=0.4433 glob_full_p_auroc=0.9234 glob_full_p_aupr=0.4434 loc10_p_auroc=0.9401 loc10_p_aupr=0.5916 knn256_p_auroc=0.9451 knn256_p_aupr=0.5960 soft1_p_auroc=0.9447 soft1_p_aupr=0.5985 cal10_p_auroc=0.9345 cal10_p_aupr=0.5526 hyb_p_auroc=0.9540 hyb_p_aupr=0.6119
+   time/memory: fit_register_s=5.16 fit_memory_s=50.9 test_register_per_scan_s=2.55 test_features_match_per_scan_s=2.08 test_per_scan_score_per_scan_s=0.133 peak_rss_gb=3.42 peak_gpu_gb=0.281
+final-s4_mvtec_merged-20261023-100412.csv | o_auroc=0.6177 p_auroc=0.7953 p_aupr=0.2242 glob_cs_o_auroc=0.6437 glob_full_o_auroc=0.6467 loc10_o_auroc=0.6177 knn256_o_auroc=0.6152 soft1_o_auroc=0.5416 cal10_o_auroc=0.6200 hyb_o_auroc=0.6704 h1_hyb_o_auroc=0.6836 glob_cs_p_auroc=0.8342 glob_cs_p_aupr=0.2725 glob_full_p_auroc=0.8357 glob_full_p_aupr=0.2743 loc10_p_auroc=0.7953 loc10_p_aupr=0.2242 knn256_p_auroc=0.7897 knn256_p_aupr=0.2387 soft1_p_auroc=0.7484 soft1_p_aupr=0.1558 cal10_p_auroc=0.7753 cal10_p_aupr=0.2115 hyb_p_auroc=0.8206 hyb_p_aupr=0.3030
+   time/memory: fit_register_s=2.73 fit_memory_s=25.2 test_register_per_scan_s=0.522 test_features_match_per_scan_s=1.62 test_per_scan_score_per_scan_s=0.0686 peak_rss_gb=3.15 peak_gpu_gb=0.28
+final-s4_real3d_merged-20261023-151816.csv | o_auroc=0.8527 p_auroc=0.9420 p_aupr=0.5972 glob_cs_o_auroc=0.7474 glob_full_o_auroc=0.7520 loc10_o_auroc=0.8527 knn256_o_auroc=0.8544 soft1_o_auroc=0.8522 cal10_o_auroc=0.8149 hyb_o_auroc=0.8621 h1_hyb_o_auroc=0.8623 glob_cs_p_auroc=0.9246 glob_cs_p_aupr=0.4354 glob_full_p_auroc=0.9246 glob_full_p_aupr=0.4336 loc10_p_auroc=0.9420 loc10_p_aupr=0.5972 knn256_p_auroc=0.9432 knn256_p_aupr=0.6000 soft1_p_auroc=0.9464 soft1_p_aupr=0.6022 cal10_p_auroc=0.9372 cal10_p_aupr=0.5557 hyb_p_auroc=0.9555 hyb_p_aupr=0.6141
+   time/memory: fit_register_s=5.62 fit_memory_s=53.2 test_register_per_scan_s=2.71 test_features_match_per_scan_s=2.17 test_per_scan_score_per_scan_s=0.139 peak_rss_gb=3.49 peak_gpu_gb=0.281
+
+=== LOG final-s0-part0_mvtec.log: 35 lines, 0 error lines ===
+   p_aupr_pooled: 0.1514
+
+[ad3d] saved: results/parts/final-s0-part0_mvtec_20261023-080302.csv / .json / _scores.json
+
+=== LOG final-s0-part0_real3d.log: 395 lines, 0 error lines ===
+   p_aupr_pooled: 0.4599
+
+[ad3d] saved: results/parts/final-s0-part0_real3d_20261023-110930.csv / .json / _scores.json
+
+=== LOG final-s0-part1_mvtec.log: 26 lines, 0 error lines ===
+   p_aupr_pooled: 0.0732
+
+[ad3d] saved: results/parts/final-s0-part1_mvtec_20261023-080453.csv / .json / _scores.json
+
+=== LOG final-s0-part1_real3d.log: 242 lines, 0 error lines ===
+   p_aupr_pooled: 0.3793
+
+[ad3d] saved: results/parts/final-s0-part1_real3d_20261023-111847.csv / .json / _scores.json
+
+=== LOG final-s1-part0_mvtec.log: 27 lines, 0 error lines ===
+   p_aupr_pooled: 0.1308
+
+[ad3d] saved: results/parts/final-s1-part0_mvtec_20261023-083404.csv / .json / _scores.json
+
+=== LOG final-s1-part0_real3d.log: 389 lines, 0 error lines ===
+   p_aupr_pooled: 0.4594
+
+[ad3d] saved: results/parts/final-s1-part0_real3d_20261023-121542.csv / .json / _scores.json
+
+=== LOG final-s1-part1_mvtec.log: 21 lines, 0 error lines ===
+   p_aupr_pooled: 0.0977
+
+[ad3d] saved: results/parts/final-s1-part1_mvtec_20261023-083259.csv / .json / _scores.json
+
+=== LOG final-s1-part1_real3d.log: 241 lines, 0 error lines ===
+   p_aupr_pooled: 0.3843
+
+[ad3d] saved: results/parts/final-s1-part1_real3d_20261023-121925.csv / .json / _scores.json
+
+=== LOG final-s2-part0_mvtec.log: 59 lines, 0 error lines ===
+   p_aupr_pooled: 0.1363
+
+[ad3d] saved: results/parts/final-s2-part0_mvtec_20261023-090237.csv / .json / _scores.json
+
+=== LOG final-s2-part0_real3d.log: 376 lines, 0 error lines ===
+   p_aupr_pooled: 0.4906
+
+[ad3d] saved: results/parts/final-s2-part0_real3d_20261023-131327.csv / .json / _scores.json
+
+=== LOG final-s2-part1_mvtec.log: 22 lines, 0 error lines ===
+   p_aupr_pooled: 0.0938
+
+[ad3d] saved: results/parts/final-s2-part1_mvtec_20261023-090117.csv / .json / _scores.json
+
+=== LOG final-s2-part1_real3d.log: 242 lines, 0 error lines ===
+   p_aupr_pooled: 0.3841
+
+[ad3d] saved: results/parts/final-s2-part1_real3d_20261023-131751.csv / .json / _scores.json
+
+=== LOG final-s3-part0_mvtec.log: 40 lines, 0 error lines ===
+   p_aupr_pooled: 0.1428
+
+[ad3d] saved: results/parts/final-s3-part0_mvtec_20261023-093031.csv / .json / _scores.json
+
+=== LOG final-s3-part0_real3d.log: 392 lines, 0 error lines ===
+   p_aupr_pooled: 0.4474
+
+[ad3d] saved: results/parts/final-s3-part0_real3d_20261023-141153.csv / .json / _scores.json
+
+=== LOG final-s3-part1_mvtec.log: 23 lines, 0 error lines ===
+   p_aupr_pooled: 0.1047
+
+[ad3d] saved: results/parts/final-s3-part1_mvtec_20261023-092948.csv / .json / _scores.json
+
+=== LOG final-s3-part1_real3d.log: 242 lines, 0 error lines ===
+   p_aupr_pooled: 0.3867
+
+[ad3d] saved: results/parts/final-s3-part1_real3d_20261023-141621.csv / .json / _scores.json
+
+=== LOG final-s4-part0_mvtec.log: 43 lines, 0 error lines ===
+   p_aupr_pooled: 0.1160
+
+[ad3d] saved: results/parts/final-s4-part0_mvtec_20261023-100407.csv / .json / _scores.json
+
+=== LOG final-s4-part0_real3d.log: 385 lines, 0 error lines ===
+   p_aupr_pooled: 0.4555
+
+[ad3d] saved: results/parts/final-s4-part0_real3d_20261023-151249.csv / .json / _scores.json
+
+=== LOG final-s4-part1_mvtec.log: 21 lines, 0 error lines ===
+   p_aupr_pooled: 0.0993
+
+[ad3d] saved: results/parts/final-s4-part1_mvtec_20261023-095850.csv / .json / _scores.json
+
+=== LOG final-s4-part1_real3d.log: 242 lines, 0 error lines ===
+   p_aupr_pooled: 0.3789
+
+[ad3d] saved: results/parts/final-s4-part1_real3d_20261023-151811.csv / .json / _scores.json
+
+=== END OF REPORT ===
