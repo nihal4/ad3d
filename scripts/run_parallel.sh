@@ -98,7 +98,20 @@ if [ "${SPLIT:-0}" = "1" ]; then
         --out results/parts --tag "${name}${TAGSUF}-s${s}-part${g}" > "logs/${name}${TAGSUF}-s${s}-part${g}_${DATASET}.log" 2>&1 &
       pids+=($!)
     done
+    # progress watcher: every PROGRESS_EVERY s print each part's last finished category, so a stall or a dead session
+    # is visible in the notebook log (the run logs themselves are files that vanish with the session)
+    ( while sleep "${PROGRESS_EVERY:-600}"; do
+        alive=0; for p in "${pids[@]}"; do kill -0 "$p" 2>/dev/null && alive=1; done
+        [ "$alive" = 1 ] || break
+        for g in $(seq 0 $((NGPU-1))); do
+          lg="logs/${name}${TAGSUF}-s${s}-part${g}_${DATASET}.log"
+          last=$(grep -E "^\[(real3d|shapenet|mvtec|dev)\]" "$lg" 2>/dev/null | tail -1 | cut -c1-110)
+          echo "[progress $(date +%H:%M)] ${name}${TAGSUF} s${s} part${g}: $(grep -cE "^\[(real3d|shapenet|mvtec)\] " "$lg" 2>/dev/null) categories done; last: ${last:-none}"
+        done
+      done ) &
+    watcher=$!
     for p in "${pids[@]}"; do wait "$p"; done
+    kill "$watcher" 2>/dev/null; wait "$watcher" 2>/dev/null
     if [ "${RUNNER:-}" != "dev" ]; then
       python scripts/merge_categories.py --dataset "$DATASET" $PARTIAL "${name}${TAGSUF}-s${s}" results/parts/${name}${TAGSUF}-s${s}-part*_${DATASET}_*[0-9].csv
     fi

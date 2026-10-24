@@ -632,3 +632,16 @@ SUMMARY over 3 benchmarks (hyb vs global, max pooling): Real3D-AD +11.2, MVTec +
 vs location-aware alone: +0.7 (n.s.), +5.0, +4.2. Pose hypotheses (H=6 vs 1): zero effect on all three.
 Code: --n-protos with 1 prototype is undefined for hyb (needs >= 2 objects for the leave-one-object-out reference);
 robustness uses 2 / 3 prototypes. Notebook STEP 18 (session 6) added.
+
+### STEP 18 session 6 (2026-10-24): MVTec 10 goods (3 seeds) + Real3D-AD 2 / 3 prototypes (seed 0); noise run never finished
+Reports: results_and_summary/results/step18_s6/ (printed text only; files lost with the session).
+MVTec 3D-AD, 10 training goods (32-49 min/seed): hyb_max 71.59 +- 1.01 (4 goods: 68.26) | glob_full_p99 68.04 (65.85) |
+  glob_full_max 67.20 (64.79) | loc10 64.43 (63.29). Category-level (10 cats, mean of 3 seeds): hyb - glob_full_max +4.40
+  [+1.15, +7.56], hyb - glob_full_p99 +3.55 [+0.73, +6.49], hyb - loc10 +7.16 [+2.35, +13.52]. hyb point P-AUPR 0.33-0.34 vs 0.30.
+  -> more training goods help (+3.3) and the gap to global memory widens; trend toward the all-goods BTF-FPFH 75.3.
+Real3D-AD seed 0 (full 4 prototypes: seed 0 85.22, 5-seed mean 86.51):
+  3 prototypes: hyb 87.15 | loc10 87.15 | glob_full_max 74.72 / p99 76.84  (no loss)
+  2 prototypes: hyb 83.07 | loc10 82.50 | glob_full_max 72.25 / p99 73.91  (-2 to -3 points; global loses as much)
+Noise run (std 0.005) started 08:31 and the session ended before it printed anything; synthetic profiling shows no
+slowdown from noise (33 s vs 34 s), so the session most likely ended (limit / editor session) rather than the code looping.
+run_parallel now prints a progress line per part every PROGRESS_EVERY (600) s. Session 7 = 18c (MVTec 25 goods) + 18e.
