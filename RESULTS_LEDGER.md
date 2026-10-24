@@ -615,3 +615,20 @@ BUGS found: MVTec file names repeat across defect folders (000.tiff) -> (1) stat
 (fixed: positional keys for old files), (2) seed-0 MVTec maps overwrote each other (fixed: sample_id = '<kind>_<file>';
 maps re-run in 17f). AUROC numbers above are unaffected (computed from the record lists, labels verified 22/88 etc.).
 New: --n-protos on MVTec now loads that many training goods (training-set-size study).
+
+### STEP 17 session 5 (2026-10-23/24): FROZEN configuration on Anomaly-ShapeNet TEST, 5 seeds (84-91 min/seed) + MVTec maps (40 min)
+Only the printed report arrived so far (results_and_summary/results/step17_s5/report_17_session5.txt); per-sample files
+and maps are in results_17.zip of that session (still to be uploaded).
+Object AUROC, mean +- std over seeds: hyb_max 92.66 +- 0.28 | h1_hyb 92.74 | glob_full_max 93.04 | glob_cs_max 92.93
+  glob_full_p99 91.96 | loc10_max 88.43 | cal10 87.36 | knn256 87.22
+Category-level paired bootstrap (40 categories, means over seeds; object-level bootstrap pending the zip):
+  hyb - glob_full_max -0.37 [-1.31, +0.50] (14 better / 15 worse) -> tie
+  hyb - loc10_max +4.23 [+2.15, +6.67] (18 better / 3 worse)    hyb - h1_hyb -0.08 [-0.31, +0.16]
+  hyb worst vs global: tap1 -9.8, cup1 -5.4, cup0 -4.4; best: bag0 +6.2, helmet3 +5.2. loc10 alone collapses on vase0
+  (-32), tap1 (-25), cap5/cap3 (-23) -> hyb removes those failures.
+Seed-0 point level: hyb P-AUROC 0.954 / P-AUPR 0.739 vs global 0.942/0.716, loc10 0.949/0.704.
+Compute (ShapeNet, per scan): registration 2.8 s, features + matching 3.1 s, scoring 0.19 s; peak RSS 2.8 GB, GPU 0.28 GB.
+SUMMARY over 3 benchmarks (hyb vs global, max pooling): Real3D-AD +11.2, MVTec +3.5, Anomaly-ShapeNet -0.4 (tie);
+vs location-aware alone: +0.7 (n.s.), +5.0, +4.2. Pose hypotheses (H=6 vs 1): zero effect on all three.
+Code: --n-protos with 1 prototype is undefined for hyb (needs >= 2 objects for the leave-one-object-out reference);
+robustness uses 2 / 3 prototypes. Notebook STEP 18 (session 6) added.
