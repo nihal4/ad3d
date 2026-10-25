@@ -1,0 +1,157 @@
+[parallel] gpus=2 cpus=4 threads/proc=2  configs: final  seeds: 0
+[timing] final-noise005 seed 0 start 2026-10-24 20:25:50
+[progress 20:35] final-noise005 s0 part0: 0 categories done; last: none
+[progress 20:35] final-noise005 s0 part1: 1 categories done; last: [real3d]       candybar  O-AUROC 0.650  P-AUROC 0.542  P-AUPR 0.025  (50/100 anomalous)  align_fitness 1.00  p
+[progress 20:45] final-noise005 s0 part0: 1 categories done; last: [real3d]       airplane  O-AUROC 0.742  P-AUROC 0.526  P-AUPR 0.031  (50/100 anomalous)  align_fitness 0.98  p
+[progress 20:45] final-noise005 s0 part1: 1 categories done; last: [real3d]       candybar  O-AUROC 0.650  P-AUROC 0.542  P-AUPR 0.025  (50/100 anomalous)  align_fitness 1.00  p
+[progress 20:55] final-noise005 s0 part0: 2 categories done; last: [real3d]            car  O-AUROC 0.440  P-AUROC 0.560  P-AUPR 0.081  (50/100 anomalous)  align_fitness 1.00  p
+[progress 20:55] final-noise005 s0 part1: 2 categories done; last: [real3d]        chicken  O-AUROC 0.635  P-AUROC 0.603  P-AUPR 0.111  (54/106 anomalous)  align_fitness 0.93  p
+[progress 21:05] final-noise005 s0 part0: 3 categories done; last: [real3d]        diamond  O-AUROC 0.436  P-AUROC 0.682  P-AUPR 0.201  (50/100 anomalous)  align_fitness 1.00  p
+[progress 21:05] final-noise005 s0 part1: 3 categories done; last: [real3d]           duck  O-AUROC 0.566  P-AUROC 0.537  P-AUPR 0.058  (50/100 anomalous)  align_fitness 0.96  p
+[progress 21:15] final-noise005 s0 part0: 3 categories done; last: [real3d]        diamond  O-AUROC 0.436  P-AUROC 0.682  P-AUPR 0.201  (50/100 anomalous)  align_fitness 1.00  p
+[progress 21:15] final-noise005 s0 part1: 4 categories done; last: [real3d]       gemstone  O-AUROC 0.430  P-AUROC 0.457  P-AUPR 0.033  (50/100 anomalous)  align_fitness 0.92  p
+[progress 21:25] final-noise005 s0 part0: 5 categories done; last: [real3d]       seahorse  O-AUROC 0.562  P-AUROC 0.661  P-AUPR 0.176  (50/100 anomalous)  align_fitness 0.98  p
+[progress 21:25] final-noise005 s0 part1: 4 categories done; last: [real3d]       gemstone  O-AUROC 0.430  P-AUROC 0.457  P-AUPR 0.033  (50/100 anomalous)  align_fitness 0.92  p
+[progress 21:35] final-noise005 s0 part0: 5 categories done; last: [real3d]       seahorse  O-AUROC 0.562  P-AUROC 0.661  P-AUPR 0.176  (50/100 anomalous)  align_fitness 0.98  p
+[progress 21:35] final-noise005 s0 part1: 5 categories done; last: [real3d]          shell  O-AUROC 0.384  P-AUROC 0.588  P-AUPR 0.061  (48/100 anomalous)  align_fitness 0.89  p
+[progress 21:45] final-noise005 s0 part0: 6 categories done; last: [real3d]       starfish  O-AUROC 0.485  P-AUROC 0.630  P-AUPR 0.116  (50/100 anomalous)  align_fitness 1.00  p
+[progress 21:45] final-noise005 s0 part1: 5 categories done; last: [real3d]          shell  O-AUROC 0.384  P-AUROC 0.588  P-AUPR 0.061  (48/100 anomalous)  align_fitness 0.89  p
+merged 12 categories -> results/final-noise005-s0_real3d_merged-20261024-214611.csv
+{'o_auroc': 0.5385, 'p_auroc': 0.5736, 'p_aupr': 0.0907, 'p_aupr_pooled': 0.0341}
+[timing] final-noise005 seed 0 real3d wall-clock 80 min
+=== TIMING ===
+[timing] final-n25 seed 0 start 2026-10-24 17:13:57
+[timing] final-n25 seed 0 mvtec wall-clock 63 min
+[timing] final-n25 seed 1 start 2026-10-24 18:17:42
+[timing] final-n25 seed 1 mvtec wall-clock 65 min
+[timing] final-n25 seed 2 start 2026-10-24 19:23:49
+[timing] final-n25 seed 2 mvtec wall-clock 61 min
+[timing] final-noise005 seed 0 start 2026-10-24 20:25:50
+[timing] final-noise005 seed 0 real3d wall-clock 80 min
+
+=== SCORE FILES (2) ===
+
+######## real3d: seeds [0]
+
+--- real3d seed 0: 12 categories ---
+CAT|hyb_max|h1_hyb_max|hyb_top1pct|hyb_p99|loc10_max|loc10_p99|cal10_max|glob_full_max|glob_full_p99|glob_cs_max|glob_cs_p99|knn256_max
+CAT|real3d|0|airplane|n=100|0.795|0.784|0.821|0.829|0.742|0.810|0.693|0.792|0.780|0.792|0.780|0.724
+CAT|real3d|0|candybar|n=100|0.625|0.611|0.634|0.622|0.650|0.601|0.526|0.592|0.664|0.589|0.666|0.652
+CAT|real3d|0|car|n=100|0.376|0.370|0.380|0.411|0.440|0.416|0.502|0.604|0.614|0.606|0.610|0.467
+CAT|real3d|0|chicken|n=106|0.554|0.543|0.543|0.538|0.635|0.611|0.507|0.642|0.628|0.642|0.627|0.630
+CAT|real3d|0|diamond|n=100|0.358|0.431|0.368|0.382|0.436|0.423|0.405|0.526|0.502|0.526|0.502|0.438
+CAT|real3d|0|duck|n=100|0.426|0.428|0.438|0.421|0.566|0.500|0.438|0.579|0.517|0.572|0.519|0.500
+CAT|real3d|0|fish|n=100|0.446|0.446|0.440|0.436|0.594|0.566|0.432|0.496|0.566|0.484|0.557|0.503
+CAT|real3d|0|gemstone|n=100|0.460|0.448|0.477|0.477|0.430|0.419|0.482|0.412|0.463|0.412|0.461|0.426
+CAT|real3d|0|seahorse|n=100|0.575|0.579|0.591|0.606|0.562|0.600|0.566|0.578|0.613|0.579|0.621|0.531
+CAT|real3d|0|shell|n=100|0.462|0.462|0.421|0.390|0.384|0.430|0.524|0.542|0.528|0.542|0.528|0.395
+CAT|real3d|0|starfish|n=100|0.556|0.591|0.578|0.586|0.485|0.504|0.581|0.525|0.550|0.525|0.550|0.509
+CAT|real3d|0|toffees|n=100|0.542|0.544|0.563|0.560|0.538|0.624|0.538|0.614|0.587|0.617|0.587|0.554
+MEAN|real3d|0|hyb_max=51.47|h1_hyb_max=51.97|hyb_top1pct=52.11|hyb_p99=52.16|loc10_max=53.85|loc10_p99=54.21|cal10_max=51.63|glob_full_max=57.51|glob_full_p99=58.44|glob_cs_max=57.37|glob_cs_p99=58.42|knn256_max=52.73
+
+=== real3d: object AUROC, mean +- std over 1 seeds ===
+          hyb_max   51.47 +- 0.00   seeds: 51.47
+       h1_hyb_max   51.97 +- 0.00   seeds: 51.97
+      hyb_top1pct   52.11 +- 0.00   seeds: 52.11
+          hyb_p99   52.16 +- 0.00   seeds: 52.16
+        loc10_max   53.85 +- 0.00   seeds: 53.85
+        loc10_p99   54.21 +- 0.00   seeds: 54.21
+        cal10_max   51.63 +- 0.00   seeds: 51.63
+    glob_full_max   57.51 +- 0.00   seeds: 57.51
+    glob_full_p99   58.44 +- 0.00   seeds: 58.44
+      glob_cs_max   57.37 +- 0.00   seeds: 57.37
+      glob_cs_p99   58.42 +- 0.00   seeds: 58.42
+       knn256_max   52.73 +- 0.00   seeds: 52.73
+
+=== MERGED CSV MEANS (point-level metrics of the key channels) ===
+final-noise005-s0_real3d_merged-20261024-214611.csv | o_auroc=0.5385 p_auroc=0.5736 p_aupr=0.0907 glob_cs_o_auroc=0.5737 glob_full_o_auroc=0.5751 loc10_o_auroc=0.5385 knn256_o_auroc=0.5273 soft1_o_auroc=0.5340 cal10_o_auroc=0.5163 hyb_o_auroc=0.5147 h1_hyb_o_auroc=0.5197 glob_cs_p_auroc=0.6943 glob_cs_p_aupr=0.1281 glob_full_p_auroc=0.6953 glob_full_p_aupr=0.1287 loc10_p_auroc=0.5736 loc10_p_aupr=0.0907 knn256_p_auroc=0.5698 knn256_p_aupr=0.0865 soft1_p_auroc=0.5868 soft1_p_aupr=0.0878 cal10_p_auroc=0.5494 cal10_p_aupr=0.0645 hyb_p_auroc=0.5623 hyb_p_aupr=0.0722
+   time/memory: fit_register_s=7.33 fit_memory_s=49.2 test_register_per_scan_s=2.89 test_features_match_per_scan_s=2.78 test_per_scan_score_per_scan_s=0.206 peak_rss_gb=3.56 peak_gpu_gb=0.281
+
+=== LOG final-noise005-s0-part0_real3d.log: 396 lines, 0 error lines ===
+   p_aupr_pooled: 0.0454
+
+[ad3d] saved: results/parts/final-noise005-s0-part0_real3d_20261024-213726.csv / .json / _scores.json
+
+=== LOG final-noise005-s0-part1_real3d.log: 247 lines, 0 error lines ===
+   p_aupr_pooled: 0.0227
+
+[ad3d] saved: results/parts/final-noise005-s0-part1_real3d_20261024-214606.csv / .json / _scores.json
+
+=== END OF REPORT ===
+
+[parallel] gpus=2 cpus=4 threads/proc=2  configs: final  seeds: 0
+[timing] final-dens50 seed 0 start 2026-10-24 21:46:20
+[progress 21:56] final-dens50 s0 part0: 1 categories done; last: [real3d]       airplane  O-AUROC 0.867  P-AUROC 0.954  P-AUPR 0.557  (50/100 anomalous)  align_fitness 0.99  p
+[progress 21:56] final-dens50 s0 part1: 1 categories done; last: [real3d]       candybar  O-AUROC 1.000  P-AUROC 0.996  P-AUPR 0.835  (50/100 anomalous)  align_fitness 1.00  p
+[progress 22:06] final-dens50 s0 part0: 2 categories done; last: [real3d]            car  O-AUROC 0.882  P-AUROC 0.983  P-AUPR 0.650  (50/100 anomalous)  align_fitness 1.00  p
+[progress 22:06] final-dens50 s0 part1: 2 categories done; last: [real3d]        chicken  O-AUROC 0.780  P-AUROC 0.925  P-AUPR 0.534  (54/106 anomalous)  align_fitness 0.92  p
+[progress 22:16] final-dens50 s0 part0: 3 categories done; last: [real3d]        diamond  O-AUROC 1.000  P-AUROC 0.992  P-AUPR 0.848  (50/100 anomalous)  align_fitness 1.00  p
+[progress 22:16] final-dens50 s0 part1: 3 categories done; last: [real3d]           duck  O-AUROC 0.912  P-AUROC 0.981  P-AUPR 0.689  (50/100 anomalous)  align_fitness 0.96  p
+[progress 22:26] final-dens50 s0 part0: 4 categories done; last: [real3d]           fish  O-AUROC 1.000  P-AUROC 0.990  P-AUPR 0.819  (50/100 anomalous)  align_fitness 1.00  p
+[progress 22:26] final-dens50 s0 part1: 4 categories done; last: [real3d]       gemstone  O-AUROC 0.868  P-AUROC 0.966  P-AUPR 0.632  (50/100 anomalous)  align_fitness 0.91  p
+[progress 22:36] final-dens50 s0 part0: 5 categories done; last: [real3d]       seahorse  O-AUROC 0.862  P-AUROC 0.907  P-AUPR 0.515  (50/100 anomalous)  align_fitness 0.99  p
+[progress 22:36] final-dens50 s0 part1: 5 categories done; last: [real3d]          shell  O-AUROC 0.501  P-AUROC 0.812  P-AUPR 0.381  (48/100 anomalous)  align_fitness 0.91  p
+merged 12 categories -> results/final-dens50-s0_real3d_merged-20261024-224316.csv
+{'o_auroc': 0.8641, 'p_auroc': 0.9471, 'p_aupr': 0.6213, 'p_aupr_pooled': 0.4556}
+[timing] final-dens50 seed 0 real3d wall-clock 56 min
+=== TIMING ===
+[timing] final-n25 seed 0 start 2026-10-24 17:13:57
+[timing] final-n25 seed 0 mvtec wall-clock 63 min
+[timing] final-n25 seed 1 start 2026-10-24 18:17:42
+[timing] final-n25 seed 1 mvtec wall-clock 65 min
+[timing] final-n25 seed 2 start 2026-10-24 19:23:49
+[timing] final-n25 seed 2 mvtec wall-clock 61 min
+[timing] final-noise005 seed 0 start 2026-10-24 20:25:50
+[timing] final-noise005 seed 0 real3d wall-clock 80 min
+[timing] final-dens50 seed 0 start 2026-10-24 21:46:20
+[timing] final-dens50 seed 0 real3d wall-clock 56 min
+
+=== SCORE FILES (2) ===
+
+######## real3d: seeds [0]
+
+--- real3d seed 0: 12 categories ---
+CAT|hyb_max|h1_hyb_max|hyb_top1pct|hyb_p99|loc10_max|loc10_p99|cal10_max|glob_full_max|glob_full_p99|glob_cs_max|glob_cs_p99|knn256_max
+CAT|real3d|0|airplane|n=100|0.885|0.885|0.880|0.851|0.867|0.890|0.816|0.634|0.678|0.656|0.685|0.893
+CAT|real3d|0|candybar|n=100|0.992|0.990|0.994|0.995|1.000|1.000|0.969|0.950|0.983|0.948|0.984|1.000
+CAT|real3d|0|car|n=100|0.870|0.870|0.874|0.852|0.882|0.853|0.884|0.640|0.645|0.649|0.638|0.864
+CAT|real3d|0|chicken|n=106|0.778|0.799|0.788|0.798|0.780|0.789|0.782|0.635|0.675|0.631|0.678|0.803
+CAT|real3d|0|diamond|n=100|1.000|1.000|1.000|1.000|1.000|1.000|1.000|0.980|0.994|0.978|0.992|1.000
+CAT|real3d|0|duck|n=100|0.902|0.902|0.904|0.897|0.912|0.900|0.880|0.745|0.784|0.746|0.805|0.904
+CAT|real3d|0|fish|n=100|1.000|1.000|1.000|1.000|1.000|0.998|0.937|0.888|0.854|0.884|0.869|0.999
+CAT|real3d|0|gemstone|n=100|0.894|0.894|0.897|0.871|0.868|0.832|0.841|0.774|0.801|0.774|0.794|0.892
+CAT|real3d|0|seahorse|n=100|0.842|0.843|0.862|0.892|0.862|0.928|0.929|0.648|0.701|0.650|0.703|0.888
+CAT|real3d|0|shell|n=100|0.543|0.527|0.534|0.526|0.501|0.488|0.510|0.431|0.496|0.444|0.508|0.522
+CAT|real3d|0|starfish|n=100|0.861|0.850|0.900|0.913|0.836|0.875|0.852|0.670|0.803|0.715|0.800|0.887
+CAT|real3d|0|toffees|n=100|0.864|0.869|0.887|0.911|0.860|0.867|0.839|0.774|0.820|0.766|0.812|0.879
+MEAN|real3d|0|hyb_max=86.93|h1_hyb_max=86.92|hyb_top1pct=87.67|hyb_p99=87.55|loc10_max=86.41|loc10_p99=86.85|cal10_max=85.33|glob_full_max=73.06|glob_full_p99=76.95|glob_cs_max=73.67|glob_cs_p99=77.24|knn256_max=87.76
+
+=== real3d: object AUROC, mean +- std over 1 seeds ===
+          hyb_max   86.93 +- 0.00   seeds: 86.93
+       h1_hyb_max   86.92 +- 0.00   seeds: 86.92
+      hyb_top1pct   87.67 +- 0.00   seeds: 87.67
+          hyb_p99   87.55 +- 0.00   seeds: 87.55
+        loc10_max   86.41 +- 0.00   seeds: 86.41
+        loc10_p99   86.85 +- 0.00   seeds: 86.85
+        cal10_max   85.33 +- 0.00   seeds: 85.33
+    glob_full_max   73.06 +- 0.00   seeds: 73.06
+    glob_full_p99   76.95 +- 0.00   seeds: 76.95
+      glob_cs_max   73.67 +- 0.00   seeds: 73.67
+      glob_cs_p99   77.24 +- 0.00   seeds: 77.24
+       knn256_max   87.76 +- 0.00   seeds: 87.76
+
+=== MERGED CSV MEANS (point-level metrics of the key channels) ===
+final-dens50-s0_real3d_merged-20261024-224316.csv | o_auroc=0.8641 p_auroc=0.9471 p_aupr=0.6213 glob_cs_o_auroc=0.7367 glob_full_o_auroc=0.7306 loc10_o_auroc=0.8641 knn256_o_auroc=0.8776 soft1_o_auroc=0.8673 cal10_o_auroc=0.8533 hyb_o_auroc=0.8693 h1_hyb_o_auroc=0.8692 glob_cs_p_auroc=0.9198 glob_cs_p_aupr=0.4191 glob_full_p_auroc=0.9201 glob_full_p_aupr=0.4173 loc10_p_auroc=0.9471 loc10_p_aupr=0.6213 knn256_p_auroc=0.9495 knn256_p_aupr=0.6223 soft1_p_auroc=0.9517 soft1_p_aupr=0.6367 cal10_p_auroc=0.9434 cal10_p_aupr=0.5921 hyb_p_auroc=0.9578 hyb_p_aupr=0.6296
+   time/memory: fit_register_s=5.55 fit_memory_s=52.7 test_register_per_scan_s=2.51 test_features_match_per_scan_s=1.97 test_per_scan_score_per_scan_s=0.12 peak_rss_gb=3.4 peak_gpu_gb=0.281
+
+=== LOG final-dens50-s0-part0_real3d.log: 394 lines, 0 error lines ===
+   p_aupr_pooled: 0.5221
+
+[ad3d] saved: results/parts/final-dens50-s0-part0_real3d_20261024-223836.csv / .json / _scores.json
+
+=== LOG final-dens50-s0-part1_real3d.log: 238 lines, 0 error lines ===
+   p_aupr_pooled: 0.3892
+
+[ad3d] saved: results/parts/final-dens50-s0-part1_real3d_20261024-224310.csv / .json / _scores.json
+
+=== END OF REPORT ===

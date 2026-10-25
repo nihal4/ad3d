@@ -645,3 +645,38 @@ Real3D-AD seed 0 (full 4 prototypes: seed 0 85.22, 5-seed mean 86.51):
 Noise run (std 0.005) started 08:31 and the session ended before it printed anything; synthetic profiling shows no
 slowdown from noise (33 s vs 34 s), so the session most likely ended (limit / editor session) rather than the code looping.
 run_parallel now prints a progress line per part every PROGRESS_EVERY (600) s. Session 7 = 18c (MVTec 25 goods) + 18e.
+
+### STEP 18 session 7 (2026-10-24): MVTec 25 goods (3 seeds, 61-65 min/seed) + Real3D-AD noise 0.005 and density 0.5 (seed 0)
+Reports: results_and_summary/results/step18_s7/. Progress lines worked; noise run took 80 min (session 6 death was the session).
+MVTec training-set size (object AUROC, mean over seeds): 
+  goods      4 (5 seeds)   10 (3 seeds)   25 (3 seeds)
+  hyb_max    68.26         71.59          73.74 +- 1.43
+  glob p99   65.85         68.04          71.73
+  glob max   64.79         67.20          70.69
+  loc10 max  63.29         64.43          64.90
+  25 goods, category level: hyb - glob_full_max +3.04 [-3.01, +9.78] (4 better / 5 worse) -> no longer significant;
+  hyb - loc10 +8.83 [+1.84, +17.14]; hyb - h1_hyb -0.23. Peak RSS 8.4 GB, fit 3.5-4 min per category with 25 goods.
+  BTF FPFH (all ~200+ goods, organised grid) 75.3 -> with 25 goods hyb is within ~1.5 points.
+Real3D-AD robustness, seed 0 (full: 85.22): density 0.5: hyb 86.93, loc10 86.41, glob 73.06/76.95 (no loss);
+  noise std 0.005 (= half the 0.01 voxel): EVERY rule collapses (hyb 51.5, loc10 53.9, global 57.5/58.4, P-AUROC 0.56-0.70)
+  -> FPFH at the sampling resolution is destroyed; an optional sweep 0.0005 / 0.001 / 0.002 is cell 18f.
+Robustness summary so far: 3 prototypes 87.15, 2 prototypes 83.07, half density 86.93, noise 0.005 51.5.
+
+### MANUSCRIPT (2026-10-25): EAAI draft, paper/eaai/ (private, gitignored)
+elsarticle preprint 12pt single column, line numbers, anonymised; separate title_page.tex and highlights.tex.
+38 pages. Every result number comes from paper/tables/final_numbers.json (make_final_numbers.py); tables are generated
+by paper/tables/make_eaai_tables.py, figures by paper/figures/make_eaai_figs.py + method_overview.tex (updated: no
+real scans, normal-only calibration block, hybrid query, max object score). Std over seeds = sample std (ddof 1):
+Real3D-AD 86.5 +- 0.9 (the step-17 report printed population std 0.77). Statistics: category-level paired bootstrap
+(10,000) on all three benchmarks; object-level operating points for Real3D-AD and MVTec 3D-AD.
+Removed from the paper: real GLFM scans, the alignment diagnostic (old configuration), the old teaser figure.
+New references (all verified on OpenAlex): Bergmann 2022 (MVTec 3D-AD), Li 2021 (CutPaste), Efron 1979, Hanley 1982.
+
+## 2026-10-25 — EAAI manuscript checked against the official Guide for Authors
+- Guide PDF (41 pp.) read in full; limits confirmed: <= 50 pages (ours 39), abstract <= 250 words (247), 1-6 keywords (6),
+  highlights 3-5 x <= 85 chars (75-82), double-anonymised with separate title page.
+- Changes: generative-AI section retitled per guide and moved disclosures into every figure caption; caption titles and
+  abbreviation expansions; DOIs printed (27/33 entries; 5 new DOIs verified on Crossref); title page gets full postal
+  address, corresponding-author block, acknowledgements; bitmap Type 3 fonts removed (Courier/Helvetica);
+  separate Figure_1..4.pdf and Highlights.docx; title-page source kept out of the manuscript source zip.
+- No numbers changed.
